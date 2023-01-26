@@ -57,7 +57,7 @@ functions instead of at the top of the file with the other declarations.
 
 static bool32 TryRemoveScreens(u8 battler);
 static bool32 IsUnnerveAbilityOnOpposingSide(u8 battlerId);
-static u8 GetFlingPowerFromItemId(u16 itemId);
+extern u8 GetFlingPowerFromItemId(u16 itemId);
 static void SetRandomMultiHitCounter();
 static u32 GetBattlerItemHoldEffectParam(u8 battlerId, u16 item);
 static u16 GetInverseTypeMultiplier(u16 multiplier);
@@ -8414,7 +8414,7 @@ static u32 ApplyModifier(u16 modifier, u32 val)
     return UQ_4_12_TO_INT((modifier * val) + UQ_4_12_ROUND);
 }
 
-static const u8 sFlailHpScaleToPowerTable[] =
+const u8 sFlailHpScaleToPowerTable[] =
 {
     1, 200,
     4, 150,
@@ -8437,7 +8437,7 @@ static const u16 sWeightToDamageTable[] =
 
 static const u8 sSpeedDiffPowerTable[] = {40, 60, 80, 120, 150};
 static const u8 sHeatCrashPowerTable[] = {40, 40, 60, 80, 100, 120};
-static const u8 sTrumpCardPowerTable[] = {200, 80, 60, 50, 40};
+const u8 sTrumpCardPowerTable[] = {200, 80, 60, 50, 40};
 
 const struct TypePower gNaturalGiftTable[] =
 {
@@ -10419,7 +10419,7 @@ struct Pokemon *GetBattlerPartyData(u8 battlerId)
     return mon;
 }
 
-static u8 GetFlingPowerFromItemId(u16 itemId)
+u8 GetFlingPowerFromItemId(u16 itemId)
 {
     if (itemId >= ITEM_TM01 && itemId <= ITEM_HM08)
     {

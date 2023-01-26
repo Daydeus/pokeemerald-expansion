@@ -3,9 +3,11 @@
 #include "battle.h"
 #include "battle_anim.h"
 #include "frontier_util.h"
+#include "battle_interface.h"
 #include "battle_message.h"
 #include "battle_tent.h"
 #include "battle_factory.h"
+#include "battle_util.h"
 #include "bg.h"
 #include "contest.h"
 #include "contest_effect.h"
@@ -3631,19 +3633,154 @@ static void PrintMoveNameAndPP(u8 moveIndex)
 
 static void PrintMovePowerAndAccuracy(u16 moveIndex)
 {
+    struct Pokemon *mon = &sMonSummaryScreen->currentMon;
+    u16 dynamicPower;
     const u8 *text;
     if (moveIndex != 0)
     {
         FillWindowPixelRect(PSS_LABEL_WINDOW_MOVES_POWER_ACC, PIXEL_FILL(0), 53, 0, 19, 32);
 
-        if (gBattleMoves[moveIndex].power < 2)
+        switch (moveIndex)
         {
-            text = gText_ThreeDashes;
+        case MOVE_FLING:
+        {
+            u16 heldItem = GetMonData(mon, MON_DATA_HELD_ITEM);
+            if (heldItem != ITEM_NONE)
+            {
+                dynamicPower = GetFlingPowerFromItemId(heldItem);
+                ConvertIntToDecimalStringN(gStringVar1, dynamicPower, STR_CONV_MODE_RIGHT_ALIGN, 3);
+                text = gStringVar1;
+            }
+            else
+                text = gText_ThreeDashes;
+            break;
         }
-        else
+        case MOVE_ERUPTION:
+        case MOVE_DRAGON_ENERGY:
+        case MOVE_WATER_SPOUT:
         {
-            ConvertIntToDecimalStringN(gStringVar1, gBattleMoves[moveIndex].power, STR_CONV_MODE_RIGHT_ALIGN, 3);
+            u16 basePower = gBattleMoves[MOVE_ERUPTION].power;
+            u16 currentHP = GetMonData(mon, MON_DATA_HP);
+            u16 maxHP = GetMonData(mon, MON_DATA_MAX_HP);
+            if (currentHP != 0)
+            {
+                dynamicPower = currentHP * basePower / maxHP;
+                ConvertIntToDecimalStringN(gStringVar1, dynamicPower, STR_CONV_MODE_RIGHT_ALIGN, 3);
+                text = gStringVar1;
+            }
+            else
+                text = gText_ThreeDashes;
+            break;
+        }
+        case MOVE_FLAIL:
+        case MOVE_REVERSAL:
+        {   // sizeof(sFlailHpScaleToPowerTable) = 12
+            u32 i;
+            u16 currentHP = GetMonData(mon, MON_DATA_HP);
+            u16 maxHP = GetMonData(mon, MON_DATA_MAX_HP);
+            u32 hpFraction = GetScaledHPFraction(currentHP, maxHP, 48);
+            for (i = 0; i < 12; i += 2)
+            {
+                if (hpFraction <= sFlailHpScaleToPowerTable[i])
+                    break;
+            }
+
+            if (currentHP != 0)
+            {
+                dynamicPower = sFlailHpScaleToPowerTable[i + 1];
+                ConvertIntToDecimalStringN(gStringVar1, dynamicPower, STR_CONV_MODE_RIGHT_ALIGN, 3);
+                text = gStringVar1;
+            }
+            else
+                text = gText_ThreeDashes;
+            break;
+        }
+        case MOVE_RETURN:
+        {
+            u8 monFriendship = GetMonData(mon, MON_DATA_FRIENDSHIP);
+            dynamicPower = (10 * monFriendship / 25);
+            if (dynamicPower == 0)
+                dynamicPower = 1;
+            ConvertIntToDecimalStringN(gStringVar1, dynamicPower, STR_CONV_MODE_RIGHT_ALIGN, 3);
             text = gStringVar1;
+            break;
+        }
+        case MOVE_FRUSTRATION:
+        {
+            u8 monFriendship = GetMonData(mon, MON_DATA_FRIENDSHIP);
+            dynamicPower = (10 * (MAX_FRIENDSHIP - monFriendship) / 25);
+            if (dynamicPower == 0)
+                dynamicPower = 1;
+            ConvertIntToDecimalStringN(gStringVar1, dynamicPower, STR_CONV_MODE_RIGHT_ALIGN, 3);
+            text = gStringVar1;
+            break;
+        }
+        case MOVE_NATURAL_GIFT:
+        {
+            u16 heldItem = GetMonData(mon, MON_DATA_HELD_ITEM);
+            if (heldItem >= ITEM_CHERI_BERRY && heldItem <= ITEM_MARANGA_BERRY)
+            {
+                dynamicPower = gNaturalGiftTable[ITEM_TO_BERRY(heldItem)].power;
+                ConvertIntToDecimalStringN(gStringVar1, dynamicPower, STR_CONV_MODE_RIGHT_ALIGN, 3);
+                text = gStringVar1;
+            }
+            else
+                text = gText_ThreeDashes;
+        }
+            break;
+        case MOVE_TRUMP_CARD:
+        {
+            u8 movePP = 5;
+            if (GetMonData(mon, MON_DATA_MOVE1) == MOVE_TRUMP_CARD)
+                movePP = GetMonData(mon, MON_DATA_PP1);
+            else if (GetMonData(mon, MON_DATA_MOVE2) == MOVE_TRUMP_CARD)
+                movePP = GetMonData(mon, MON_DATA_PP2);
+            else if (GetMonData(mon, MON_DATA_MOVE3) == MOVE_TRUMP_CARD)
+                movePP = GetMonData(mon, MON_DATA_PP3);
+            else if (GetMonData(mon, MON_DATA_MOVE4) == MOVE_TRUMP_CARD)
+                movePP = GetMonData(mon, MON_DATA_PP4);
+            // ARRAY_COUNT(sTrumpCardPowerTable) = 5
+            if (movePP == 0)
+                text = gText_ThreeDashes;
+            else
+            {
+                if (movePP >= 5)
+                    dynamicPower = sTrumpCardPowerTable[4];
+                else
+                    dynamicPower = sTrumpCardPowerTable[movePP - 1];
+                ConvertIntToDecimalStringN(gStringVar1, dynamicPower, STR_CONV_MODE_RIGHT_ALIGN, 3);
+                text = gStringVar1;
+            }
+            break;
+        }
+        case MOVE_HIDDEN_POWER:
+        {
+            #if B_HIDDEN_POWER_DMG < GEN_6
+                u8 powerBits;
+                powerBits = ((GetMonData(mon, MON_DATA_HP_IV) & 2) >> 1)
+                        | ((GetMonData(mon, MON_DATA_ATK_IV) & 2) << 0)
+                        | ((GetMonData(mon, MON_DATA_DEF_IV) & 2) << 1)
+                        | ((GetMonData(mon, MON_DATA_SPEED_IV) & 2) << 2)
+                        | ((GetMonData(mon, MON_DATA_SPATK_IV)& 2) << 3)
+                        | ((GetMonData(mon, MON_DATA_SPDEF_IV) & 2) << 4);
+
+                dynamicPower = (40 * powerBits) / 63 + 30;
+            #else
+                dynamicPower = 60;
+            #endif
+            ConvertIntToDecimalStringN(gStringVar1, dynamicPower, STR_CONV_MODE_RIGHT_ALIGN, 3);
+            text = gStringVar1;
+            break;
+        }
+        default:
+            if (gBattleMoves[moveIndex].power < 2)
+                text = gText_ThreeDashes;
+            else
+            {
+                ConvertIntToDecimalStringN(gStringVar1, gBattleMoves[moveIndex].power, STR_CONV_MODE_RIGHT_ALIGN, 3);
+                text = gStringVar1;
+            }
+            break;
         }
 
         PrintTextOnWindow(PSS_LABEL_WINDOW_MOVES_POWER_ACC, text, 53, 1, 0, 0);
@@ -3920,10 +4057,47 @@ static void SetMoveTypeIcons(void)
 {
     u8 i;
     struct PokeSummary *summary = &sMonSummaryScreen->summary;
+    struct Pokemon *mon = &sMonSummaryScreen->currentMon;
+    u16 species = GetMonData(mon, MON_DATA_SPECIES);
+    u16 heldItem = GetMonData(mon, MON_DATA_HELD_ITEM);
+    u8 dynamicType;
+
     for (i = 0; i < MAX_MON_MOVES; i++)
     {
         if (summary->moves[i] != MOVE_NONE)
-            SetTypeSpritePosAndPal(gBattleMoves[summary->moves[i]].type, 85, 32 + (i * 16), i + SPRITE_ARR_ID_TYPE);
+        {
+            if (summary->moves[i] == MOVE_HIDDEN_POWER)
+            {
+                u8 typeBits  = ((GetMonData(mon, MON_DATA_HP_IV) & 1) << 0)
+                     | ((GetMonData(mon, MON_DATA_ATK_IV) & 1) << 1)
+                     | ((GetMonData(mon, MON_DATA_DEF_IV) & 1) << 2)
+                     | ((GetMonData(mon, MON_DATA_SPEED_IV) & 1) << 3)
+                     | ((GetMonData(mon, MON_DATA_SPATK_IV) & 1) << 4)
+                     | ((GetMonData(mon, MON_DATA_SPDEF_IV) & 1) << 5);
+
+                dynamicType = (15 * typeBits) / 63 + 1;
+                if (dynamicType >= TYPE_MYSTERY)
+                    dynamicType++;
+                dynamicType |= 0xC0;
+                SetTypeSpritePosAndPal(dynamicType & 0x3F, 85, 32 + (i * 16), i + SPRITE_ARR_ID_TYPE);
+            }
+            else if (summary->moves[i] == MOVE_NATURAL_GIFT)
+            {
+                if (heldItem >= ITEM_CHERI_BERRY && heldItem <= ITEM_MARANGA_BERRY)
+                {
+                    dynamicType = gNaturalGiftTable[ITEM_TO_BERRY(heldItem)].type;
+
+                    SetTypeSpritePosAndPal(dynamicType & 0x3F, 85, 32 + (i * 16), i + SPRITE_ARR_ID_TYPE);
+                }
+                else
+                {
+                    dynamicType = TYPE_NORMAL;
+                    SetTypeSpritePosAndPal(dynamicType & 0x3F, 85, 32 + (i * 16), i + SPRITE_ARR_ID_TYPE);
+                }
+            }
+            else
+                SetTypeSpritePosAndPal(gBattleMoves[summary->moves[i]].type, 85, 32 + (i * 16), i + SPRITE_ARR_ID_TYPE);
+        }
         else
             SetSpriteInvisibility(i + SPRITE_ARR_ID_TYPE, TRUE);
     }
@@ -3944,6 +4118,10 @@ static void SetContestMoveTypeIcons(void)
 
 static void SetNewMoveTypeIcon(void)
 {
+    struct Pokemon *mon = &sMonSummaryScreen->currentMon;
+    u16 heldItem =GetMonData(mon, MON_DATA_HELD_ITEM);
+    u8 dynamicType;
+
     if (sMonSummaryScreen->newMove == MOVE_NONE)
     {
         SetSpriteInvisibility(SPRITE_ARR_ID_TYPE + 4, TRUE);
@@ -3951,7 +4129,40 @@ static void SetNewMoveTypeIcon(void)
     else
     {
         if (sMonSummaryScreen->currPageIndex == PSS_PAGE_BATTLE_MOVES)
-            SetTypeSpritePosAndPal(gBattleMoves[sMonSummaryScreen->newMove].type, 85, 96, SPRITE_ARR_ID_TYPE + 4);
+        {
+            if (sMonSummaryScreen->newMove == MOVE_HIDDEN_POWER)
+            {
+                u8 typeBits  = ((GetMonData(mon, MON_DATA_HP_IV) & 1) << 0)
+                     | ((GetMonData(mon, MON_DATA_ATK_IV) & 1) << 1)
+                     | ((GetMonData(mon, MON_DATA_DEF_IV) & 1) << 2)
+                     | ((GetMonData(mon, MON_DATA_SPEED_IV) & 1) << 3)
+                     | ((GetMonData(mon, MON_DATA_SPATK_IV) & 1) << 4)
+                     | ((GetMonData(mon, MON_DATA_SPDEF_IV) & 1) << 5);
+
+                dynamicType = (15 * typeBits) / 63 + 1;
+                if (dynamicType >= TYPE_MYSTERY)
+                    dynamicType++;
+                dynamicType |= 0xC0;
+                SetTypeSpritePosAndPal(dynamicType & 0x3F, 85, 96, SPRITE_ARR_ID_TYPE + 4);
+            }
+            else if (sMonSummaryScreen->newMove == MOVE_NATURAL_GIFT)
+            {
+
+                if (heldItem >= ITEM_CHERI_BERRY && heldItem <= ITEM_MARANGA_BERRY)
+                {
+                    dynamicType = gNaturalGiftTable[ITEM_TO_BERRY(heldItem)].type;
+
+                    SetTypeSpritePosAndPal(dynamicType, 85, 96, SPRITE_ARR_ID_TYPE + 4);
+                }
+                else
+                {
+                    dynamicType = TYPE_NORMAL;
+                    SetTypeSpritePosAndPal(dynamicType, 85, 96, SPRITE_ARR_ID_TYPE + 4);
+                }
+            }
+            else
+                SetTypeSpritePosAndPal(gBattleMoves[sMonSummaryScreen->newMove].type, 85, 96, SPRITE_ARR_ID_TYPE + 4);
+        }
         else
             SetTypeSpritePosAndPal(NUMBER_OF_MON_TYPES + gContestMoves[sMonSummaryScreen->newMove].contestCategory, 85, 96, SPRITE_ARR_ID_TYPE + 4);
     }
