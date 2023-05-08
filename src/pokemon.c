@@ -3612,7 +3612,7 @@ void CreateBoxMon(struct BoxPokemon *boxMon, u16 species, u8 level, u8 fixedIV, 
 
     GiveBoxMonInitialMoveset(boxMon);
 
-    if (Random() % 100 >= P_WILD_MON_EGG_MOVE_CHANCE && otIdType == OT_ID_PLAYER_ID)
+    if (Random() % 100 <= P_WILD_MON_EGG_MOVE_CHANCE && otIdType == OT_ID_PLAYER_ID)
         GiveBoxMonEggMove(boxMon);
 }
 
