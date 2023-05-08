@@ -629,16 +629,38 @@ static void PlayerNotOnBikeMoving(u8 direction, u16 heldKeys)
 
     if (gPlayerAvatar.flags & PLAYER_AVATAR_FLAG_SURFING)
     {
-        // same speed as running
-        PlayerWalkFast(direction);
+        if (FlagGet(FLAG_RUNNING_MODE) && (heldKeys & B_BUTTON))
+        {
+            // Slower speed
+            PlayerWalkFast(direction);
+        }
+        else if (FlagGet(FLAG_RUNNING_MODE) || (heldKeys & B_BUTTON))
+        {
+            // Faster speed
+            PlayerWalkFaster(direction);
+        }
+        else
+        {
+            // Slower speed
+            PlayerWalkFast(direction);
+        }
         return;
     }
 
-    if (!(gPlayerAvatar.flags & PLAYER_AVATAR_FLAG_UNDERWATER) && (heldKeys & B_BUTTON) && FlagGet(FLAG_SYS_B_DASH)
+    if (!(gPlayerAvatar.flags & PLAYER_AVATAR_FLAG_UNDERWATER) && FlagGet(FLAG_SYS_B_DASH)
+     && ((heldKeys & B_BUTTON) || FlagGet(FLAG_RUNNING_MODE))
      && IsRunningDisallowed(gObjectEvents[gPlayerAvatar.objectEventId].currentMetatileBehavior) == 0)
     {
-        PlayerRun(direction);
-        gPlayerAvatar.flags |= PLAYER_AVATAR_FLAG_DASH;
+        if (FlagGet(FLAG_RUNNING_MODE) && (heldKeys & B_BUTTON))
+        {
+            PlayerWalkNormal(direction);
+        }
+        else
+        {
+            PlayerRun(direction);
+            gPlayerAvatar.flags |= PLAYER_AVATAR_FLAG_DASH;
+        }
+        
         return;
     }
     else
