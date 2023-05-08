@@ -11,6 +11,7 @@
 #include "battle_tower.h"
 #include "battle_z_move.h"
 #include "data.h"
+#include "daycare.h"
 #include "event_data.h"
 #include "evolution_scene.h"
 #include "field_specials.h"
@@ -67,6 +68,7 @@ static void Task_PlayMapChosenOrBattleBGM(u8 taskId);
 static bool8 ShouldSkipFriendshipChange(void);
 static void RemoveIVIndexFromList(u8 *ivs, u8 selectedIv);
 void TrySpecialOverworldEvo();
+static void GiveBoxMonEggMove(struct BoxPokemon *boxMon);
 
 EWRAM_DATA static u8 sLearningMoveTableID = 0;
 EWRAM_DATA u8 gPlayerPartyCount = 0;
@@ -76,6 +78,7 @@ EWRAM_DATA struct Pokemon gEnemyParty[PARTY_SIZE] = {0};
 EWRAM_DATA struct SpriteTemplate gMultiuseSpriteTemplate = {0};
 EWRAM_DATA static struct MonSpritesGfxManager *sMonSpritesGfxManagers[MON_SPR_GFX_MANAGERS_COUNT] = {NULL};
 EWRAM_DATA static u8 sTriedEvolving = 0;
+EWRAM_DATA static u16 sWildEggMoves[EGG_MOVES_ARRAY_COUNT] = {0}; // Added for wild egg moves
 
 #include "data/battle_moves.h"
 
@@ -3608,6 +3611,27 @@ void CreateBoxMon(struct BoxPokemon *boxMon, u16 species, u8 level, u8 fixedIV, 
     }
 
     GiveBoxMonInitialMoveset(boxMon);
+
+    if (Random() % 100 >= P_WILD_MON_EGG_MOVE_CHANCE && otIdType == OT_ID_PLAYER_ID)
+        GiveBoxMonEggMove(boxMon);
+}
+
+static void GiveBoxMonEggMove(struct BoxPokemon *boxMon)
+{
+    u16 species = GetEggSpecies(GetBoxMonData(boxMon, MON_DATA_SPECIES, NULL));
+    u16 numEggMoves = 0;
+    u16 moveToLearn;
+    s32 i;
+
+    numEggMoves = GetEggMoves(species, sWildEggMoves);
+
+    if (numEggMoves == 0)
+        return;
+    else
+        moveToLearn = Random() % numEggMoves;
+
+    if (GiveMoveToBoxMon(boxMon, sWildEggMoves[moveToLearn]) == MON_HAS_MAX_MOVES)
+        DeleteFirstMoveAndGiveMoveToBoxMon(boxMon, sWildEggMoves[moveToLearn]);
 }
 
 void CreateMonWithNature(struct Pokemon *mon, u16 species, u8 level, u8 fixedIV, u8 nature)
