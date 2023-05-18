@@ -1031,6 +1031,11 @@ static bool8 ShouldUseItem(u32 battler)
     if (IsAiVsAiBattle())
         return FALSE;
 
+    // Don't use if Difficulty setting forbids
+    if (gSaveBlock2Ptr->optionsBattleItems == OPTIONS_BATTLE_ITEMS_PLAYER_ONLY
+    || gSaveBlock2Ptr->optionsBattleItems == OPTIONS_BATTLE_ITEMS_NOBODY)
+        return FALSE;
+
     // If teaming up with player and Pokemon is on the right, or Pokemon is currently held by Sky Drop
     if ((gBattleTypeFlags & BATTLE_TYPE_INGAME_PARTNER && GetBattlerPosition(battler) == B_POSITION_PLAYER_RIGHT)
        || gStatuses3[battler] & STATUS3_SKY_DROPPED)

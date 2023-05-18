@@ -637,7 +637,10 @@ static void CB2_EggHatch(void)
         if (gSprites[sEggHatchData->eggSpriteId].callback == SpriteCallbackDummy)
         {
             species = GetMonData(&gPlayerParty[sEggHatchData->eggPartyId], MON_DATA_SPECIES);
-            DoMonFrontSpriteAnimation(&gSprites[sEggHatchData->monSpriteId], species, FALSE, 1);
+            if (gSaveBlock2Ptr->optionsEntryAnimationsOff == TRUE)
+                DoMonFrontSpriteAnimation(&gSprites[sEggHatchData->monSpriteId], species, FALSE, 1 | SKIP_FRONT_ANIM);
+            else
+                DoMonFrontSpriteAnimation(&gSprites[sEggHatchData->monSpriteId], species, FALSE, 1);
             sEggHatchData->state++;
         }
         break;

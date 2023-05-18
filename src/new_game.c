@@ -90,11 +90,17 @@ static void InitPlayerTrainerId(void)
 // L=A isnt set here for some reason.
 static void SetDefaultOptions(void)
 {
-    gSaveBlock2Ptr->optionsTextSpeed = OPTIONS_TEXT_SPEED_MID;
-    gSaveBlock2Ptr->optionsWindowFrameType = 0;
+    gSaveBlock2Ptr->optionsTextSpeed = OPTIONS_TEXT_SPEED_FAST;
     gSaveBlock2Ptr->optionsSound = OPTIONS_SOUND_MONO;
+    gSaveBlock2Ptr->optionsWindowFrameType = 0;
+    gSaveBlock2Ptr->optionsMovementMode = OPTIONS_MOVEMENT_MODE_WALK;
+    gSaveBlock2Ptr->optionsClockFormat = OPTIONS_CLOCK_FORMAT_12HR;
+    gSaveBlock2Ptr->optionsMoveAnimationsOff = FALSE;
+    gSaveBlock2Ptr->optionsEntryAnimationsOff = FALSE;
     gSaveBlock2Ptr->optionsBattleStyle = OPTIONS_BATTLE_STYLE_SHIFT;
-    gSaveBlock2Ptr->optionsBattleSceneOff = FALSE;
+    gSaveBlock2Ptr->optionsBattleItems = OPTIONS_BATTLE_ITEMS_EVERYBODY;
+    gSaveBlock2Ptr->optionsLevelScaling = FALSE;
+    gSaveBlock2Ptr->optionsEnemyAI = OPTIONS_ENEMY_AI_NORMAL;
     gSaveBlock2Ptr->regionMapZoom = FALSE;
 }
 
