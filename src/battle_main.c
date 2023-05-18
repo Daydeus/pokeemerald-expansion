@@ -121,6 +121,8 @@ static void TrySpecialEvolution(void);
 static u32 Crc32B (const u8 *data, u32 size);
 static u32 GeneratePartyHash(const struct Trainer *trainer, u32 i);
 static void CustomTrainerPartyAssignMoves(struct Pokemon *mon, const struct TrainerMonCustomized *partyEntry);
+static u8 GetNPCTrainerPartyLevelScaling(void);
+static u16 TryLevelScalingEvolution(u16 species, u8 level);
 
 EWRAM_DATA u16 gBattle_BG0_X = 0;
 EWRAM_DATA u16 gBattle_BG0_Y = 0;
@@ -1959,6 +1961,61 @@ static void CustomTrainerPartyAssignMoves(struct Pokemon *mon, const struct Trai
     }
 }
 
+static u8 GetNPCTrainerPartyLevelScaling(void)
+{
+    s32 i;
+    u8 levelCheck = 0, highestLevel = 0, secondHighestLevel = 0;
+
+    // Get the player's party highest and second highest level
+    for(i = 0; i < PARTY_SIZE; i++)
+    {
+        if(GetMonData(&gPlayerParty[i], MON_DATA_SPECIES) == SPECIES_NONE)
+            break;
+        else
+            levelCheck = GetMonData(&gPlayerParty[i], MON_DATA_LEVEL);
+
+        if (levelCheck > highestLevel)
+        {
+            if (i != 0) // If more than one party member
+                secondHighestLevel = highestLevel;
+            highestLevel = levelCheck;
+        }
+        else if (levelCheck > secondHighestLevel)
+            secondHighestLevel = levelCheck;
+    }
+
+    // Vary level scaling, more if there is a large gap between highest and second
+    if (highestLevel - secondHighestLevel < 4)
+        return highestLevel - Random() % 3;
+    else
+        return highestLevel - Random() % 3 - 3;
+}
+
+static u16 TryLevelScalingEvolution(u16 species, u8 level)
+{
+    if(gEvolutionTable[species][0].param && gEvolutionTable[species][0].param <= level)
+    {
+        if(TryLevelScalingEvolution(gEvolutionTable[species][0].targetSpecies, level))
+            return TryLevelScalingEvolution(gEvolutionTable[species][0].targetSpecies, level);
+        else
+            return gEvolutionTable[species][0].targetSpecies;
+    }
+    else if (level >= 20 && (gEvolutionTable[species][0].method == EVO_FRIENDSHIP
+    || gEvolutionTable[species][0].method == EVO_FRIENDSHIP_DAY
+    || gEvolutionTable[species][0].method == EVO_FRIENDSHIP_NIGHT))
+    {
+        if(TryLevelScalingEvolution(gEvolutionTable[species][0].targetSpecies, level))
+            return TryLevelScalingEvolution(gEvolutionTable[species][0].targetSpecies, level);
+        else
+            return gEvolutionTable[species][0].targetSpecies;
+    }
+    else if (level >= 40 && gEvolutionTable[species][0].method != EVO_LEVEL)
+    {
+        return gEvolutionTable[species][0].targetSpecies;
+    }
+    return SPECIES_NONE;
+}
+
 u8 CreateNPCTrainerPartyFromTrainer(struct Pokemon *party, const struct Trainer *trainer, bool32 firstTrainer, u32 battleTypeFlags)
 {
     u32 personalityValue;
@@ -1966,6 +2023,9 @@ u8 CreateNPCTrainerPartyFromTrainer(struct Pokemon *party, const struct Trainer 
     s32 i, j;
     u8 monsCount;
     s32 ball = -1;
+    u16 species;
+    u8 level;
+
     if (battleTypeFlags & BATTLE_TYPE_TRAINER && !(battleTypeFlags & (BATTLE_TYPE_FRONTIER
                                                                         | BATTLE_TYPE_EREADER_TRAINER
                                                                         | BATTLE_TYPE_TRAINER_HILL)))
@@ -1996,20 +2056,52 @@ u8 CreateNPCTrainerPartyFromTrainer(struct Pokemon *party, const struct Trainer 
                 personalityValue = 0x88; // Use personality more likely to result in a male Pokémon
 
             personalityValue += personalityHash << 8;
+
             switch (trainer->partyFlags)
             {
             case 0:
             {
                 const struct TrainerMonNoItemDefaultMoves *partyData = trainer->party.NoItemDefaultMoves;
                 fixedIV = partyData[i].iv * MAX_PER_STAT_IVS / 255;
-                CreateMon(&party[i], partyData[i].species, partyData[i].lvl, fixedIV, TRUE, personalityValue, OT_ID_RANDOM_NO_SHINY, 0);
+                // Scale NPC Pokémon level and try evolutions
+                if (gSaveBlock2Ptr->optionsLevelScaling == TRUE)
+                {
+                    level = GetNPCTrainerPartyLevelScaling();
+                    if (partyData[i].lvl > level)
+                        level = partyData[i].lvl;
+
+                    species = partyData[i].species;
+                    if (TryLevelScalingEvolution(species, level) != SPECIES_NONE)
+                        species = TryLevelScalingEvolution(species, level);
+                }
+                else
+                {
+                    level = partyData[i].lvl;
+                    species = partyData[i].species;
+                }
+
+                CreateMon(&party[i], species, level, fixedIV, TRUE, personalityValue, OT_ID_RANDOM_NO_SHINY, 0);
                 break;
             }
             case F_TRAINER_PARTY_CUSTOM_MOVESET:
             {
                 const struct TrainerMonNoItemCustomMoves *partyData = trainer->party.NoItemCustomMoves;
                 fixedIV = partyData[i].iv * MAX_PER_STAT_IVS / 255;
-                CreateMon(&party[i], partyData[i].species, partyData[i].lvl, fixedIV, TRUE, personalityValue, OT_ID_RANDOM_NO_SHINY, 0);
+                // Scale NPC Pokémon level and try evolutions
+                if (gSaveBlock2Ptr->optionsLevelScaling == TRUE)
+                {
+                    level = GetNPCTrainerPartyLevelScaling();
+                    if (partyData[i].lvl > level)
+                        level = partyData[i].lvl;
+                    species = partyData[i].species;
+                }
+                else
+                {
+                    level = partyData[i].lvl;
+                    species = partyData[i].species;
+                }
+
+                CreateMon(&party[i], species, level, fixedIV, TRUE, personalityValue, OT_ID_RANDOM_NO_SHINY, 0);
 
                 for (j = 0; j < MAX_MON_MOVES; j++)
                 {
@@ -2022,7 +2114,21 @@ u8 CreateNPCTrainerPartyFromTrainer(struct Pokemon *party, const struct Trainer 
             {
                 const struct TrainerMonItemDefaultMoves *partyData = trainer->party.ItemDefaultMoves;
                 fixedIV = partyData[i].iv * MAX_PER_STAT_IVS / 255;
-                CreateMon(&party[i], partyData[i].species, partyData[i].lvl, fixedIV, TRUE, personalityValue, OT_ID_RANDOM_NO_SHINY, 0);
+                // Scale NPC Pokémon level and try evolutions
+                if (gSaveBlock2Ptr->optionsLevelScaling == TRUE)
+                {
+                    level = GetNPCTrainerPartyLevelScaling();
+                    if (partyData[i].lvl > level)
+                        level = partyData[i].lvl;
+                    species = partyData[i].species;
+                }
+                else
+                {
+                    level = partyData[i].lvl;
+                    species = partyData[i].species;
+                }
+
+                CreateMon(&party[i], species, level, fixedIV, TRUE, personalityValue, OT_ID_RANDOM_NO_SHINY, 0);
 
                 SetMonData(&party[i], MON_DATA_HELD_ITEM, &partyData[i].heldItem);
                 break;
@@ -2031,7 +2137,21 @@ u8 CreateNPCTrainerPartyFromTrainer(struct Pokemon *party, const struct Trainer 
             {
                 const struct TrainerMonItemCustomMoves *partyData = trainer->party.ItemCustomMoves;
                 fixedIV = partyData[i].iv * MAX_PER_STAT_IVS / 255;
-                CreateMon(&party[i], partyData[i].species, partyData[i].lvl, fixedIV, TRUE, personalityValue, OT_ID_RANDOM_NO_SHINY, 0);
+                // Scale NPC Pokémon level and try evolutions
+                if (gSaveBlock2Ptr->optionsLevelScaling == TRUE)
+                {
+                    level = GetNPCTrainerPartyLevelScaling();
+                    if (partyData[i].lvl > level)
+                        level = partyData[i].lvl;
+                    species = partyData[i].species;
+                }
+                else
+                {
+                    level = partyData[i].lvl;
+                    species = partyData[i].species;
+                }
+
+                CreateMon(&party[i], species, level, fixedIV, TRUE, personalityValue, OT_ID_RANDOM_NO_SHINY, 0);
 
                 SetMonData(&party[i], MON_DATA_HELD_ITEM, &partyData[i].heldItem);
 
@@ -2047,6 +2167,19 @@ u8 CreateNPCTrainerPartyFromTrainer(struct Pokemon *party, const struct Trainer 
                 const struct TrainerMonCustomized *partyData = trainer->party.EverythingCustomized;
                 u32 otIdType = OT_ID_RANDOM_NO_SHINY;
                 u32 fixedOtId = 0;
+                // Scale NPC Pokémon level and try evolutions
+                if (gSaveBlock2Ptr->optionsLevelScaling == TRUE)
+                {
+                    level = GetNPCTrainerPartyLevelScaling();
+                    if (partyData[i].lvl > level)
+                        level = partyData[i].lvl;
+                    species = partyData[i].species;
+                }
+                else
+                {
+                    level = partyData[i].lvl;
+                    species = partyData[i].species;
+                }
                 if (partyData[i].gender == TRAINER_MON_MALE)
                     personalityValue = (personalityValue & 0xFFFFFF00) | GeneratePersonalityForGender(MON_MALE, partyData[i].species);
                 else if (partyData[i].gender == TRAINER_MON_FEMALE)
@@ -2058,7 +2191,7 @@ u8 CreateNPCTrainerPartyFromTrainer(struct Pokemon *party, const struct Trainer 
                     otIdType = OT_ID_PRESET;
                     fixedOtId = HIHALF(personalityValue) ^ LOHALF(personalityValue);
                 }
-                CreateMon(&party[i], partyData[i].species, partyData[i].lvl, 0, TRUE, personalityValue, otIdType, fixedOtId);
+                CreateMon(&party[i], species, level, 0, TRUE, personalityValue, otIdType, fixedOtId);
                 SetMonData(&party[i], MON_DATA_HELD_ITEM, &partyData[i].heldItem);
 
                 CustomTrainerPartyAssignMoves(&party[i], &partyData[i]);
@@ -2074,7 +2207,7 @@ u8 CreateNPCTrainerPartyFromTrainer(struct Pokemon *party, const struct Trainer 
                 }
                 if (partyData[i].ability != ABILITY_NONE)
                 {
-                    const struct SpeciesInfo *speciesInfo = &gSpeciesInfo[partyData[i].species];
+                    const struct SpeciesInfo *speciesInfo = &gSpeciesInfo[species];
                     u32 maxAbilities = ARRAY_COUNT(speciesInfo->abilities);
                     for (j = 0; j < maxAbilities; ++j)
                     {
@@ -2874,6 +3007,12 @@ void SpriteCB_HideAsMoveTarget(struct Sprite *sprite)
 
 void SpriteCB_OpponentMonFromBall(struct Sprite *sprite)
 {
+    if (gSaveBlock2Ptr->optionsEntryAnimationsOff == TRUE)
+    {
+        sprite->callback = SpriteCallbackDummy;
+        return;
+    }
+
     if (sprite->affineAnimEnded)
     {
         if (!(gHitMarker & HITMARKER_NO_ANIMATIONS) || gBattleTypeFlags & (BATTLE_TYPE_LINK | BATTLE_TYPE_RECORDED_LINK))
@@ -3121,7 +3260,7 @@ static void BattleStartClearSetData(void)
 
     if (!(gBattleTypeFlags & BATTLE_TYPE_RECORDED))
     {
-        if (!(gBattleTypeFlags & BATTLE_TYPE_LINK) && gSaveBlock2Ptr->optionsBattleSceneOff == TRUE)
+        if (!(gBattleTypeFlags & BATTLE_TYPE_LINK) && gSaveBlock2Ptr->optionsMoveAnimationsOff == TRUE)
             gHitMarker |= HITMARKER_NO_ANIMATIONS;
     }
     else if (!(gBattleTypeFlags & (BATTLE_TYPE_LINK | BATTLE_TYPE_RECORDED_LINK)) && GetBattleSceneInRecordedBattle())
@@ -4213,10 +4352,16 @@ static void HandleTurnActionSelectionState(void)
                     }
                     break;
                 case B_ACTION_USE_ITEM:
-                    if (FlagGet(B_FLAG_NO_BAG_USE))
+                    if (FlagGet(B_FLAG_NO_BAG_USE) || (gBattleTypeFlags & BATTLE_TYPE_TRAINER && (gSaveBlock2Ptr->optionsBattleItems == OPTIONS_BATTLE_ITEMS_FOE_ONLY
+                    || gSaveBlock2Ptr->optionsBattleItems == OPTIONS_BATTLE_ITEMS_NOBODY)))
                     {
                         RecordedBattle_ClearBattlerAction(gActiveBattler, 1);
-                        gSelectionBattleScripts[gActiveBattler] = BattleScript_ActionSelectionItemsCantBeUsed;
+                        
+                        if (FlagGet(B_FLAG_NO_BAG_USE))
+                            gSelectionBattleScripts[gActiveBattler] = BattleScript_ActionSelectionItemsCantBeUsed;
+                        else // Blocked by difficulty settings
+                            gSelectionBattleScripts[gActiveBattler] = BattleScript_ActionSelectionItemsBlockedByDifficulty;
+
                         gBattleCommunication[gActiveBattler] = STATE_SELECTION_SCRIPT;
                         *(gBattleStruct->selectionScriptFinished + gActiveBattler) = FALSE;
                         *(gBattleStruct->stateIdAfterSelScript + gActiveBattler) = STATE_BEFORE_ACTION_CHOSEN;

@@ -300,6 +300,7 @@ const u8 gText_NumberItem_HM[] = _("{CLEAR_TO 0x11}{STR_VAR_1}{CLEAR 0x05}{STR_V
 const u8 gText_SizeSlash[] = _("SIZE /");
 const u8 gText_FirmSlash[] = _("FIRM /");
 const u8 gText_Var1DotVar2[] = _("{STR_VAR_1}.{STR_VAR_2}”");
+const u8 gText_Var1DotVar2_Metric[] = _("{STR_VAR_1}.{STR_VAR_2}cm");
 
 // Berry firmness strings
 const u8 gBerryFirmnessString_VerySoft[] = _("Very soft");
@@ -1484,28 +1485,51 @@ const u8 gText_CommErrorEllipsis[] = _("Communication error…");
 const u8 gText_MoveCloserToLinkPartner[] = _("Move closer to your link partner(s).\nAvoid obstacles between partners.");
 const u8 gText_ABtnRegistrationCounter[] = _("A Button: Registration Counter");
 const u8 gText_ABtnTitleScreen[] = _("A Button: Title Screen");
+
+// Option Menu texts
 const u8 gText_Option[] = _("OPTION");
 const u8 gText_TextSpeed[] = _("TEXT SPEED");
-const u8 gText_BattleScene[] = _("BATTLE SCENE");
-const u8 gText_BattleStyle[] = _("BATTLE STYLE");
-const u8 gText_Sound[] = _("SOUND");
-const u8 gText_Frame[] = _("FRAME");
-const u8 gText_OptionMenuCancel[] = _("CANCEL");
+const u8 gText_TextSpeedSlow[] = _("SLOW");
+const u8 gText_TextSpeedMid[] = _("MID");
+const u8 gText_TextSpeedFast[] = _("FAST");
 const u8 gText_ButtonMode[] = _("BUTTON MODE");
-const u8 gText_TextSpeedSlow[] = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}SLOW");
-const u8 gText_TextSpeedMid[] = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}MID");
-const u8 gText_TextSpeedFast[] = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}FAST");
-const u8 gText_BattleSceneOn[] = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}ON");
-const u8 gText_BattleSceneOff[] = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}OFF");
-const u8 gText_BattleStyleShift[] = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}SHIFT");
-const u8 gText_BattleStyleSet[] = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}SET");
-const u8 gText_SoundMono[] = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}MONO");
-const u8 gText_SoundStereo[] = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}STEREO");
-const u8 gText_FrameType[] = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}TYPE");
+const u8 gText_ButtonTypeNormal[] = _("NORMAL");
+const u8 gText_ButtonTypeLR[] = _("LR");
+const u8 gText_ButtonTypeLEqualsA[] = _("L=A");
+const u8 gText_Sound[] = _("SOUND");
+const u8 gText_SoundMono[] = _("MONO");
+const u8 gText_SoundStereo[] = _("STEREO");
+const u8 gText_UnitSystem[] = _("UNIT SYSTEM");
+const u8 gText_UnitSystemImperial[] = _("IMPERIAL");
+const u8 gText_UnitSystemMetric[] = _("METRIC");
+const u8 gText_Frame[] = _("FRAME");
+const u8 gText_FrameType[] = _("TYPE");
 const u8 gText_FrameTypeNumber[] = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}");
-const u8 gText_ButtonTypeNormal[] = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}NORMAL");
-const u8 gText_ButtonTypeLR[] = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}LR");
-const u8 gText_ButtonTypeLEqualsA[] = _("{COLOR GREEN}{SHADOW LIGHT_GREEN}L=A");
+const u8 gText_MovementMode[] = _("MOVEMENT MODE");
+const u8 gText_MovementModeWalk[] = _("WALK");
+const u8 gText_MovementModeRun[] = _("RUN");
+const u8 gText_MoveAnimations[] = _("MOVE ANIM.");
+const u8 gText_EntryAnimations[] = _("ENTRY ANIM.");
+const u8 gText_ClockFormat[] = _("CLOCK FORMAT");
+const u8 gText_ClockFormat12Hour[] = _("12HR");
+const u8 gText_ClockFormat24Hour[] = _("24HR");
+const u8 gText_BattleStyle[] = _("BATTLE STYLE");
+const u8 gText_BattleStyleShift[] = _("SHIFT");
+const u8 gText_BattleStyleSet[] = _("SET");
+const u8 gText_BattleItems[] = _("BATTLE ITEMS");
+const u8 gText_BattleItemsEverybody[] = _("EVERYBODY");
+const u8 gText_BattleItemsPlayerOnly[] = _("PLAYER ONLY");
+const u8 gText_BattleItemsFoeOnly[] = _("FOE ONLY");
+const u8 gText_BattleItemsNobody[] = _("NOBODY");
+const u8 gText_BattleItemsBlocked[] = _("Your difficulty settings block item use\nin battle!");
+const u8 gText_LevelScaling[] = _("LVL SCALING");
+const u8 gText_EnemyAI[] = _("ENEMY AI");
+const u8 gText_EnemyAINormal[] = _("NORMAL");
+const u8 gText_EnemyAISmart[] = _("SMART");
+const u8 gText_OptionOn[]  = _("ON");
+const u8 gText_OptionOff[] = _("OFF");
+const u8 gText_OptionMenuSave[] = _("SAVE");
+
 const u8 gText_NumPlayerLink[] = _("{STR_VAR_1}P LINK");
 const u8 gText_BronzeCard[] = _("BRONZE");
 const u8 gText_CopperCard[] = _("COPPER");
@@ -1831,3 +1855,12 @@ const u8 gText_Answer[] = _("ANSWER");
 const u8 gText_PokeBalls[] = _("POKé BALLS");
 const u8 gText_Berry[] = _("BERRY");
 const u8 gText_Berries[] = _("BERRIES");
+
+// Start Menu Clock
+const u8 gText_CurrentTime[] = _(" {STR_VAR_1}:{STR_VAR_2}");
+const u8 gText_CurrentTimeOff[] = _(" {STR_VAR_1} {STR_VAR_2}");        // Time display without colon
+const u8 gText_CurrentTimeAM[] = _(" {STR_VAR_1}:{STR_VAR_2} a.m.");
+const u8 gText_CurrentTimeAMOff[] = _(" {STR_VAR_1} {STR_VAR_2} a.m."); // Time display without colon
+const u8 gText_CurrentTimePM[] = _(" {STR_VAR_1}:{STR_VAR_2} p.m.");
+const u8 gText_CurrentTimePMOff[] = _(" {STR_VAR_1} {STR_VAR_2} p.m."); // Time display without colon
+const u8 gText_OptionClockFormat[] = _("Clock Format");

@@ -293,29 +293,49 @@ extern const u8 gText_BattlePyramidConfirmRest[];
 extern const u8 gText_BattlePyramidConfirmRetire[];
 
 // option menu texts
-extern const u8 gText_TextSpeedSlow[];
-extern const u8 gText_TextSpeedMid[];
-extern const u8 gText_TextSpeedFast[];
-extern const u8 gText_BattleSceneOn[];
-extern const u8 gText_BattleSceneOff[];
-extern const u8 gText_BattleStyleShift[];
-extern const u8 gText_BattleStyleSet[];
-extern const u8 gText_SoundMono[];
-extern const u8 gText_SoundStereo[];
-extern const u8 gText_FrameTypeNumber[];
-extern const u8 gText_FrameType[];
-extern const u8 gText_ButtonTypeNormal[];
-extern const u8 gText_ButtonTypeLR[];
-extern const u8 gText_ButtonTypeLEqualsA[];
 extern const u8 gText_Option[];
 extern const u8 gText_OptionMenu[];
 extern const u8 gText_TextSpeed[];
-extern const u8 gText_BattleScene[];
-extern const u8 gText_BattleStyle[];
-extern const u8 gText_Sound[];
-extern const u8 gText_Frame[];
-extern const u8 gText_OptionMenuCancel[];
+extern const u8 gText_TextSpeedSlow[];
+extern const u8 gText_TextSpeedMid[];
+extern const u8 gText_TextSpeedFast[];
 extern const u8 gText_ButtonMode[];
+extern const u8 gText_ButtonTypeNormal[];
+extern const u8 gText_ButtonTypeLR[];
+extern const u8 gText_ButtonTypeLEqualsA[];
+extern const u8 gText_Sound[];
+extern const u8 gText_SoundMono[];
+extern const u8 gText_SoundStereo[];
+extern const u8 gText_UnitSystem[];
+extern const u8 gText_UnitSystemImperial[];
+extern const u8 gText_UnitSystemMetric[];
+extern const u8 gText_Frame[];
+extern const u8 gText_FrameTypeNumber[];
+extern const u8 gText_FrameType[];
+extern const u8 gText_MovementMode[];
+extern const u8 gText_MovementModeWalk[];
+extern const u8 gText_MovementModeRun[];
+extern const u8 gText_MoveAnimations[];
+extern const u8 gText_EntryAnimations[];
+extern const u8 gText_ClockFormat[];
+extern const u8 gText_ClockFormat12Hour[];
+extern const u8 gText_ClockFormat24Hour[];
+extern const u8 gText_BattleStyle[];
+extern const u8 gText_BattleStyleShift[];
+extern const u8 gText_BattleStyleSet[];
+extern const u8 gText_BattleItems[];
+extern const u8 gText_BattleItemsEverybody[];
+extern const u8 gText_BattleItemsPlayerOnly[];
+extern const u8 gText_BattleItemsFoeOnly[];
+extern const u8 gText_BattleItemsNobody[];
+extern const u8 gText_BattleItemsBlocked[];
+extern const u8 gText_LevelScaling[];
+extern const u8 gText_EnemyAI[];
+extern const u8 gText_EnemyAINormal[];
+extern const u8 gText_EnemyAISmart[];
+extern const u8 gText_OptionOn[];
+extern const u8 gText_OptionOff[];
+extern const u8 gText_OptionMenuSave[];
 
 extern const u8 gText_MaleSymbol[];
 extern const u8 gText_FemaleSymbol[];
@@ -414,6 +434,7 @@ extern const u8 gText_BerryTag[];
 extern const u8 gText_NumberVar1Var2[];
 extern const u8 gText_SizeSlash[];
 extern const u8 gText_Var1DotVar2[];
+extern const u8 gText_Var1DotVar2_Metric[];
 extern const u8 gText_ThreeMarks[];
 extern const u8 gText_FirmSlash[];
 
@@ -3033,5 +3054,14 @@ extern const u8 gText_YourName[];
 extern const u8 gText_BoxName[];
 extern const u8 gText_PkmnsNickname[];
 extern const u8 gText_TellHimTheWords[];
+
+// Start Menu Clock
+extern const u8 gText_CurrentTime[];
+extern const u8 gText_CurrentTimeOff[];     // Time display without colon
+extern const u8 gText_CurrentTimeAM[];
+extern const u8 gText_CurrentTimeAMOff[];   // Time display without colon
+extern const u8 gText_CurrentTimePM[];
+extern const u8 gText_CurrentTimePMOff[];   // Time display without colon
+extern const u8 gText_OptionClockFormat[];
 
 #endif // GUARD_STRINGS_H

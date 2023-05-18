@@ -517,10 +517,16 @@ struct SaveBlock2
              u16 optionsWindowFrameType:5; // Specifies one of the 20 decorative borders for text boxes
              u16 optionsSound:1; // OPTIONS_SOUND_[MONO/STEREO]
              u16 optionsBattleStyle:1; // OPTIONS_BATTLE_STYLE_[SHIFT/SET]
-             u16 optionsBattleSceneOff:1; // whether battle animations are disabled
+             u16 optionsMoveAnimationsOff:1; // whether battle animations are disabled
              u16 regionMapZoom:1; // whether the map is zoomed in
-             //u16 padding1:4;
-             //u16 padding2;
+             u16 optionsUnitSystem:1; // whether units are displayed in metric or imperial
+             u16 optionsMovementMode:1; // whether the default movement speed is walking or running
+             u16 optionsClockFormat:2; // whether the start menu displays a clock
+             u16 optionsEntryAnimationsOff:1; // whether entry animations are played or not
+             u16 optionsBattleItems:4; // whether trainers can use items from the bag in battle
+             u16 optionsLevelScaling:1; // whether the levels of trainers and wild pokemon scale to match yours
+             u16 optionsEnemyAI:1; // whether enemy AI uses the normal difficulty or not
+             //u16 padding2:9;
     /*0x18*/ struct Pokedex pokedex;
     /*0x90*/ u8 filler_90[0x8];
     /*0x98*/ struct Time localTimeOffset;

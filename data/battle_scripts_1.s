@@ -9899,6 +9899,10 @@ BattleScript_ActionSelectionItemsCantBeUsed::
 	printselectionstring STRINGID_ITEMSCANTBEUSEDNOW
 	endselectionscript
 
+BattleScript_ActionSelectionItemsBlockedByDifficulty::
+	printselectionstring STRINGID_ITEMSBLOCKEDBYDIFFICULTY
+	endselectionscript
+
 BattleScript_FlushMessageBox::
 	printstring STRINGID_EMPTYSTRING3
 	return

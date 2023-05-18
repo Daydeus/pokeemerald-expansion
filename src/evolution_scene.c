@@ -1687,7 +1687,10 @@ static void RestoreBgAfterAnim(void)
 
 static void EvoScene_DoMonAnimAndCry(u8 monSpriteId, u16 speciesId)
 {
-    DoMonFrontSpriteAnimation(&gSprites[monSpriteId], speciesId, FALSE, 0);
+    if (gSaveBlock2Ptr->optionsEntryAnimationsOff == TRUE)
+        DoMonFrontSpriteAnimation(&gSprites[monSpriteId], speciesId, FALSE, 0 | SKIP_FRONT_ANIM);
+    else
+        DoMonFrontSpriteAnimation(&gSprites[monSpriteId], speciesId, FALSE, 0);
 }
 
 static bool32 EvoScene_IsMonAnimFinished(u8 monSpriteId)
