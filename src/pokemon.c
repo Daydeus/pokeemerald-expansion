@@ -69,6 +69,7 @@ static bool8 ShouldSkipFriendshipChange(void);
 static void RemoveIVIndexFromList(u8 *ivs, u8 selectedIv);
 void TrySpecialOverworldEvo();
 static void GiveBoxMonEggMove(struct BoxPokemon *boxMon);
+static u16 GetExpCandyDropByWildLevel(u8 level);
 
 EWRAM_DATA static u8 sLearningMoveTableID = 0;
 EWRAM_DATA u8 gPlayerPartyCount = 0;
@@ -7779,14 +7780,43 @@ static s32 GetWildMonTableIdInAlteringCave(u16 species)
     return 0;
 }
 
+static u16 GetExpCandyDropByWildLevel(u8 level)
+{
+    u8 rnd = Random() % 100;
+    u16 candy;
+
+    if (level <= 10)
+        candy = ITEM_EXP_CANDY_XS;
+    else if (level <= 15)
+        candy = (rnd <= 75) ? ITEM_EXP_CANDY_XS : ITEM_EXP_CANDY_S;
+    else if (level <= 20)
+        candy = ITEM_EXP_CANDY_S;
+    else if (level <= 25)
+        candy = (rnd <= 75) ? ITEM_EXP_CANDY_S : ITEM_EXP_CANDY_M;
+    else if (level <= 30)
+        candy = (rnd <= 25) ? ITEM_EXP_CANDY_S : ITEM_EXP_CANDY_M;
+    else if (level <= 40)
+        candy = ITEM_EXP_CANDY_M;
+    else if (level <= 50)
+        candy = (rnd <= 75) ? ITEM_EXP_CANDY_M : ITEM_EXP_CANDY_L;
+    else if (level <= 60)
+        candy = (rnd <= 25) ? ITEM_EXP_CANDY_M : ITEM_EXP_CANDY_L;
+    else if (level <= 70)
+        candy = ITEM_EXP_CANDY_L;
+    else
+        candy = ITEM_EXP_CANDY_XL;
+
+    return candy;
+}
+
 void SetWildMonHeldItem(void)
 {
     if (!(gBattleTypeFlags & (BATTLE_TYPE_LEGENDARY | BATTLE_TYPE_TRAINER | BATTLE_TYPE_PYRAMID | BATTLE_TYPE_PIKE)))
     {
         u16 rnd;
         u16 species;
-        u16 chanceNoItem = 45;
-        u16 chanceNotRare = 95;
+        u16 chanceNoItem = 30;
+        u16 chanceNotRare = 90;
         u16 count = (WILD_DOUBLE_BATTLE) ? 2 : 1;
         u16 i;
 
@@ -7838,7 +7868,16 @@ void SetWildMonHeldItem(void)
                     if (rnd < chanceNoItem)
                         continue;
                     if (rnd < chanceNotRare)
-                        SetMonData(&gEnemyParty[i], MON_DATA_HELD_ITEM, &gSpeciesInfo[species].itemCommon);
+                    {
+                        if (&gSpeciesInfo[species].itemCommon != ITEM_NONE || Random() % 100 > 50)
+                        {
+                            u8 level = GetMonData(&gEnemyParty[i], MON_DATA_LEVEL, NULL);
+                            u16 candy = GetExpCandyDropByWildLevel(level);
+                            SetMonData(&gEnemyParty[i], MON_DATA_HELD_ITEM, &candy);
+                        }
+                        else
+                            SetMonData(&gEnemyParty[i], MON_DATA_HELD_ITEM, &gSpeciesInfo[species].itemCommon);
+                    }
                     else
                         SetMonData(&gEnemyParty[i], MON_DATA_HELD_ITEM, &gSpeciesInfo[species].itemRare);
                 }
