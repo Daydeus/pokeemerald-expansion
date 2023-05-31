@@ -2728,9 +2728,6 @@ static void Cmd_resultmessage(void)
             BattleScriptPushCursor();
             gBattlescriptCurrInstr = BattleScript_HangedOnMsg;
             return;
-        case MOVE_RESULT_GLANCING_HIT:
-            stringId = STRINGID_GLANCINGHIT;
-            break;
         default:
             if (gMoveResultFlags & MOVE_RESULT_DOESNT_AFFECT_FOE)
             {
@@ -2783,6 +2780,10 @@ static void Cmd_resultmessage(void)
                 return;
             }
         #endif
+            else if (gMoveResultFlags & MOVE_RESULT_GLANCING_HIT)
+            {
+                stringId = STRINGID_GLANCINGHIT;
+            }
             else
             {
                 gBattleCommunication[MSG_DISPLAY] = 0;
