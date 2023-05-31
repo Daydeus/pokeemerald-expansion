@@ -11,6 +11,8 @@ I've implemented this feature because I believe that the all-or-nothing aspect o
 No one uses moves like Zap Cannon or Dynamic Punch because the risk of wasting your turn is so high.
 Making misses less punishing(by changing them to glancing hits) also allows for a greater variety of accuracies for moves to better differentiate them from each other.
 
+![](https://github.com/Daydeus/pokeemerald-expansion/blob/GlancingHits/Glancing_Hit_Display.gif)
+
 ## What is the pokeemerald Expansion?
 
 The Pokeemerald Expansion is a collection of feature branches that can be integrated into existing [pokeemerald](https://github.com/pret/pokeemerald) projects.
