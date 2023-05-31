@@ -2,6 +2,8 @@
 
 ## What does this feature branch do?
 
+![](https://github.com/Daydeus/pokeemerald-expansion/blob/OptionMenuUpdate/Option_Menu_Update.gif)
+
 This feature branch is a tweaked version of TheXaman's excellent tx_optionsPlus, with pieces pulled from their tx_randomizer_and_challenges branch.
 This is mostly for my own personal use, but I've made it available here as a reference.
 If you're interested in the original, you can find TheXaman's version here: https://github.com/TheXaman/pokeemerald/tree/tx_optionsPlus
