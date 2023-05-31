@@ -1978,13 +1978,19 @@ static void Cmd_accuracycheck(void)
 
         if (!RandomPercentage(RNG_ACCURACY, accuracy))
         {
-            gMoveResultFlags |= MOVE_RESULT_MISSED;
+            if (IS_MOVE_STATUS(move))
+                gMoveResultFlags |= MOVE_RESULT_MISSED;
+            else
+                gMoveResultFlags |= MOVE_RESULT_GLANCING_HIT;
+
             if (GetBattlerHoldEffect(gBattlerAttacker, TRUE) == HOLD_EFFECT_BLUNDER_POLICY)
                 gBattleStruct->blunderPolicy = TRUE;    // Only activates from missing through acc/evasion checks
 
             if (gBattleTypeFlags & BATTLE_TYPE_DOUBLE &&
                 (moveTarget == MOVE_TARGET_BOTH || moveTarget == MOVE_TARGET_FOES_AND_ALLY))
                 gBattleCommunication[MISS_TYPE] = B_MSG_AVOIDED_ATK;
+            else if (gMoveResultFlags & MOVE_RESULT_GLANCING_HIT)
+                gBattleCommunication[MISS_TYPE] = B_MSG_GLANCING_HIT;
             else
                 gBattleCommunication[MISS_TYPE] = B_MSG_MISSED;
 
@@ -2722,6 +2728,9 @@ static void Cmd_resultmessage(void)
             BattleScriptPushCursor();
             gBattlescriptCurrInstr = BattleScript_HangedOnMsg;
             return;
+        case MOVE_RESULT_GLANCING_HIT:
+            stringId = STRINGID_GLANCINGHIT;
+            break;
         default:
             if (gMoveResultFlags & MOVE_RESULT_DOESNT_AFFECT_FOE)
             {
@@ -3019,6 +3028,12 @@ void SetMoveEffect(bool32 primary, u32 certain)
 
     if (gBattleScripting.moveEffect <= PRIMARY_STATUS_MOVE_EFFECT) // status change
     {
+        // Glancing hits don't apply statuses
+        if (gMoveResultFlags & MOVE_RESULT_GLANCING_HIT)
+        {
+            return;
+        }
+
         switch (sStatusFlagsForMoveEffects[gBattleScripting.moveEffect])
         {
         case STATUS1_SLEEP:
@@ -3279,7 +3294,11 @@ void SetMoveEffect(bool32 primary, u32 certain)
             switch (gBattleScripting.moveEffect)
             {
             case MOVE_EFFECT_CONFUSION:
-                if (!CanBeConfused(gEffectBattler))
+                if (gMoveResultFlags & MOVE_RESULT_GLANCING_HIT)
+                {
+                    return;
+                }
+                else if (!CanBeConfused(gEffectBattler))
                 {
                     gBattlescriptCurrInstr++;
                 }
@@ -3303,6 +3322,11 @@ void SetMoveEffect(bool32 primary, u32 certain)
                 }
                 break;
             case MOVE_EFFECT_FLINCH:
+                if (gMoveResultFlags & MOVE_RESULT_GLANCING_HIT)
+                {
+                    return;
+                }
+
                 if (battlerAbility == ABILITY_INNER_FOCUS)
                 {
                     if (primary == TRUE || certain == MOVE_EFFECT_CERTAIN)
@@ -3369,7 +3393,11 @@ void SetMoveEffect(bool32 primary, u32 certain)
                 gBattlescriptCurrInstr++;
                 break;
             case MOVE_EFFECT_TRI_ATTACK:
-                if (gBattleMons[gEffectBattler].status1)
+                if (gMoveResultFlags & MOVE_RESULT_GLANCING_HIT)
+                {
+                    return;
+                }
+                else if (gBattleMons[gEffectBattler].status1)
                 {
                     gBattlescriptCurrInstr++;
                 }
@@ -3455,6 +3483,11 @@ void SetMoveEffect(bool32 primary, u32 certain)
                 if (mirrorArmorReflected && !affectsUser)
                     flags |= STAT_CHANGE_ALLOW_PTR;
 
+                if (gMoveResultFlags & MOVE_RESULT_GLANCING_HIT && !affectsUser)
+                {
+                    return;
+                }
+
                 if (ChangeStatBuffs(SET_STAT_BUFF_VALUE(1) | STAT_BUFF_NEGATIVE,
                                     gBattleScripting.moveEffect - MOVE_EFFECT_ATK_MINUS_1 + 1,
                                     flags | STAT_CHANGE_UPDATE_MOVE_EFFECT, gBattlescriptCurrInstr + 1))
@@ -3502,6 +3535,12 @@ void SetMoveEffect(bool32 primary, u32 certain)
                 flags = affectsUser;
                 if (mirrorArmorReflected && !affectsUser)
                     flags |= STAT_CHANGE_ALLOW_PTR;
+
+                if (gMoveResultFlags & MOVE_RESULT_GLANCING_HIT && !affectsUser)
+                {
+                    return;
+                }
+
                 if (ChangeStatBuffs(SET_STAT_BUFF_VALUE(2) | STAT_BUFF_NEGATIVE,
                                     gBattleScripting.moveEffect - MOVE_EFFECT_ATK_MINUS_2 + 1,
                                     flags | STAT_CHANGE_UPDATE_MOVE_EFFECT, gBattlescriptCurrInstr + 1))
@@ -3838,7 +3877,11 @@ void SetMoveEffect(bool32 primary, u32 certain)
                 gBattlescriptCurrInstr++;
                 break;
             case MOVE_EFFECT_DIRE_CLAW:
-                if (!gBattleMons[gEffectBattler].status1)
+                if (gMoveResultFlags & MOVE_RESULT_GLANCING_HIT)
+                {
+                    return;
+                }
+                else if (!gBattleMons[gEffectBattler].status1)
                 {
                     static const u8 sDireClawEffects[] = { MOVE_EFFECT_POISON, MOVE_EFFECT_PARALYSIS, MOVE_EFFECT_SLEEP };
                     gBattleScripting.moveEffect = RandomElement(RNG_DIRE_CLAW, sDireClawEffects);

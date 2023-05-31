@@ -269,6 +269,7 @@
 #define MOVE_RESULT_STURDIED              (1 << 8)
 #define MOVE_RESULT_FOE_ENDURED_AFFECTION (1 << 9)
 #define MOVE_RESULT_NO_EFFECT             (MOVE_RESULT_MISSED | MOVE_RESULT_DOESNT_AFFECT_FOE | MOVE_RESULT_FAILED)
+#define MOVE_RESULT_GLANCING_HIT          (1 << 10)
 
 // Battle Weather flags
 #define B_WEATHER_NONE                0

@@ -9787,6 +9787,10 @@ static s32 DoMoveDamageCalc(u16 move, u8 battlerAtk, u8 battlerDef, u8 moveType,
         dmg /= 100;
     }
 
+    // Only do half damage on Glancing hits
+    if (gMoveResultFlags & MOVE_RESULT_GLANCING_HIT)
+        dmg /= 2;
+
     if (dmg == 0)
         dmg = 1;
 
