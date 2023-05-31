@@ -5,7 +5,7 @@
 Glancing Hits are a mechanic from another monster-battling game called Summoners War: Sky Arena, which is available for mobile phones.
 
 A glancing hit is a damaging attack that only barely strikes, or strikes with little force.
-This feature branch changes misses for non-status moves into glancing hits, and gives them the following two characteristics: halved damaged and removed secondary effects.
+This feature branch changes misses for non-status moves into glancing hits, and gives them the following two characteristics: halved damage and removed secondary effects.
 
 I've implemented this feature because I believe that the all-or-nothing aspect of accuracy is too great a penalty for higher-powered moves.
 No one uses moves like Zap Cannon or Dynamic Punch because the risk of wasting your turn is so high.
