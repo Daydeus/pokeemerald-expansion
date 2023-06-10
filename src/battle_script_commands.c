@@ -2641,6 +2641,7 @@ static void Cmd_effectivenesssound(void)
             MarkBattlerForControllerExec(gActiveBattler);
             break;
         case MOVE_RESULT_NOT_VERY_EFFECTIVE:
+        case MOVE_RESULT_GLANCING_HIT:
             BtlController_EmitPlaySE(BUFFER_A, SE_NOT_EFFECTIVE);
             MarkBattlerForControllerExec(gActiveBattler);
             break;
