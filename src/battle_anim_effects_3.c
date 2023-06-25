@@ -69,7 +69,6 @@ static void AnimFlatterSpotlight(struct Sprite *);
 static void AnimReversalOrb_Step(struct Sprite *);
 static void AnimYawnCloud(struct Sprite *);
 static void AnimYawnCloud_Step(struct Sprite *);
-static void AnimSmokeBallEscapeCloud(struct Sprite *);
 static void AnimFacadeSweatDrop(struct Sprite *);
 static void AnimRoarNoiseLine(struct Sprite *);
 static void AnimRoarNoiseLine_Step(struct Sprite *);
@@ -87,7 +86,6 @@ static void AnimMeteorMashStar_Step(struct Sprite *sprite);
 static void AnimBlockX_Step(struct Sprite *);
 static void AnimUnusedItemBagSteal(struct Sprite *);
 static void AnimKnockOffStrike(struct Sprite *);
-static void AnimKnockOffStrike_Step(struct Sprite *sprite);
 static void AnimRecycle(struct Sprite *);
 static void AnimRecycle_Step(struct Sprite *);
 static void SetPsychicBackground_Step(u8);
@@ -1465,11 +1463,11 @@ static void SetPsychicBackground_Step(u8 taskId)
 
     if (++gTasks[taskId].data[5] == 4)
     {
-        lastColor = gPlttBufferFaded[paletteIndex * 16 + 11];
+        lastColor = gPlttBufferFaded[BG_PLTT_ID(paletteIndex) + 11];
         for (i = 10; i > 0; i--)
-            gPlttBufferFaded[paletteIndex * 16 + i + 1] = gPlttBufferFaded[paletteIndex * 16 + i];
+            gPlttBufferFaded[BG_PLTT_ID(paletteIndex) + i + 1] = gPlttBufferFaded[BG_PLTT_ID(paletteIndex) + i];
 
-        gPlttBufferFaded[paletteIndex * 16 + 1] = lastColor;
+        gPlttBufferFaded[BG_PLTT_ID(paletteIndex) + 1] = lastColor;
         gTasks[taskId].data[5] = 0;
     }
 
@@ -1491,15 +1489,15 @@ static void FadeScreenToWhite_Step(u8 taskId)
 
     if (++gTasks[taskId].data[5] == 4)
     {
-        lastColor = gPlttBufferFaded[paletteIndex * 16 + 11];
+        lastColor = gPlttBufferFaded[BG_PLTT_ID(paletteIndex) + 11];
         for (i = 10; i > 0; i--)
-            gPlttBufferFaded[paletteIndex * 16 + i + 1] = gPlttBufferFaded[paletteIndex * 16 + i];
-        gPlttBufferFaded[paletteIndex * 16 + 1] = lastColor;
+            gPlttBufferFaded[BG_PLTT_ID(paletteIndex) + i + 1] = gPlttBufferFaded[BG_PLTT_ID(paletteIndex) + i];
+        gPlttBufferFaded[BG_PLTT_ID(paletteIndex) + 1] = lastColor;
 
-        lastColor = gPlttBufferUnfaded[paletteIndex * 16 + 11];
+        lastColor = gPlttBufferUnfaded[BG_PLTT_ID(paletteIndex) + 11];
         for (i = 10; i > 0; i--)
-            gPlttBufferUnfaded[paletteIndex * 16 + i + 1] = gPlttBufferUnfaded[paletteIndex * 16 + i];
-        gPlttBufferUnfaded[paletteIndex * 16 + 1] = lastColor;
+            gPlttBufferUnfaded[BG_PLTT_ID(paletteIndex) + i + 1] = gPlttBufferUnfaded[BG_PLTT_ID(paletteIndex) + i];
+        gPlttBufferUnfaded[BG_PLTT_ID(paletteIndex) + 1] = lastColor;
 
         gTasks[taskId].data[5] = 0;
     }
@@ -3652,7 +3650,7 @@ static void AnimYawnCloud_Step(struct Sprite *sprite)
 // arg 1: initial x pixel offset
 // arg 2: initial y pixel offset
 // arg 3: time until destroyed
-static void AnimSmokeBallEscapeCloud(struct Sprite *sprite)
+void AnimSmokeBallEscapeCloud(struct Sprite *sprite)
 {
     sprite->data[0] = gBattleAnimArgs[3];
     StartSpriteAffineAnim(sprite, gBattleAnimArgs[0]);
@@ -5469,7 +5467,7 @@ static void AnimTask_TeeterDanceMovement_Step(u8 taskId)
     }
 }
 
-static void AnimKnockOffStrike_Step(struct Sprite *sprite)
+void AnimKnockOffStrike_Step(struct Sprite *sprite)
 {
     // These two cases are identical.
     if (GetBattlerSide(gBattleAnimTarget) == B_SIDE_PLAYER)

@@ -248,7 +248,7 @@ static void CopyBattlerDataToAIParty(u32 bPosition, u32 side)
     aiMon->species = bMon->species;
     aiMon->level = bMon->level;
     aiMon->status = bMon->status1;
-    aiMon->gender = GetGenderFromSpeciesAndPersonality(bMon->species, bMon->personality);
+    aiMon->gender = GetBattlerGender(battler);
     aiMon->isFainted = FALSE;
     aiMon->wasSentInBattle = TRUE;
     aiMon->switchInCount++;
@@ -1287,12 +1287,8 @@ static s16 AI_CheckBadMove(u8 battlerAtk, u8 battlerDef, u16 move, s16 score)
                 score -= 8;
             break;
         case EFFECT_CAPTIVATE:
-            {
-                u8 atkGender = GetGenderFromSpeciesAndPersonality(gBattleMons[battlerAtk].species, gBattleMons[battlerAtk].personality);
-                u8 defGender = GetGenderFromSpeciesAndPersonality(gBattleMons[battlerDef].species, gBattleMons[battlerDef].personality);
-                if (atkGender == MON_GENDERLESS || defGender == MON_GENDERLESS || atkGender == defGender)
-                    score -= 10;
-            }
+            if (!AreBattlersOfOppositeGender(battlerAtk, battlerDef))
+                score -= 10;
             break;
     // other
         case EFFECT_HAZE:
@@ -1592,9 +1588,7 @@ static s16 AI_CheckBadMove(u8 battlerAtk, u8 battlerDef, u16 move, s16 score)
                 score -= 2; // mainly to prevent looping between hail and snow
             break;
         case EFFECT_ATTRACT:
-            if (!AI_CanBeInfatuated(battlerAtk, battlerDef, AI_DATA->abilities[battlerDef],
-             GetGenderFromSpeciesAndPersonality(gBattleMons[battlerAtk].species, gBattleMons[battlerAtk].personality),
-             GetGenderFromSpeciesAndPersonality(gBattleMons[battlerDef].species, gBattleMons[battlerDef].personality)))
+            if (!AI_CanBeInfatuated(battlerAtk, battlerDef, AI_DATA->abilities[battlerDef]))
                 score -= 10;
             break;
         case EFFECT_SAFEGUARD:
@@ -2642,6 +2636,22 @@ static s16 AI_CheckBadMove(u8 battlerAtk, u8 battlerDef, u16 move, s16 score)
                 score -= 10;
             else if (CanTargetFaintAi(battlerDef, battlerAtk)
              && AI_WhoStrikesFirst(battlerAtk, battlerDef, move) == AI_IS_SLOWER)
+                score -= 10;
+            break;
+        case EFFECT_JUNGLE_HEALING:
+           if (AtMaxHp(battlerAtk)
+            && AtMaxHp(BATTLE_PARTNER(battlerAtk))
+            && !(gBattleMons[battlerAtk].status1 & STATUS1_ANY)
+            && !(gBattleMons[BATTLE_PARTNER(battlerAtk)].status1 & STATUS1_ANY))
+                score -= 10;
+            break;
+        case EFFECT_TAKE_HEART:
+            if ((!(gBattleMons[battlerAtk].status1 & STATUS1_ANY)
+             || PartnerMoveIs(BATTLE_PARTNER(battlerAtk), AI_DATA->partnerMove, MOVE_JUNGLE_HEALING)
+             || PartnerMoveIs(BATTLE_PARTNER(battlerAtk), AI_DATA->partnerMove, MOVE_HEAL_BELL)
+             || PartnerMoveIs(BATTLE_PARTNER(battlerAtk), AI_DATA->partnerMove, MOVE_AROMATHERAPY))
+             && !BattlerStatCanRise(battlerAtk, AI_DATA->abilities[battlerAtk], STAT_SPATK)
+             && !BattlerStatCanRise(battlerAtk, AI_DATA->abilities[battlerAtk], STAT_SPDEF))
                 score -= 10;
             break;
         case EFFECT_PLACEHOLDER:
@@ -3778,7 +3788,7 @@ static s16 AI_CheckViability(u8 battlerAtk, u8 battlerDef, u16 move, s16 score)
     case EFFECT_WISH:
     case EFFECT_HEAL_BELL:
         if (ShouldUseWishAromatherapy(battlerAtk, battlerDef, move))
-            score += 7;
+            score += 3;
         break;
     case EFFECT_THIEF:
         {
@@ -4430,6 +4440,12 @@ static s16 AI_CheckViability(u8 battlerAtk, u8 battlerDef, u16 move, s16 score)
         if (gBattleMons[battlerAtk].status1 & STATUS1_ANY)
             score += 2;
         break;
+    case EFFECT_TAKE_HEART:
+        if (gBattleMons[battlerAtk].status1 & STATUS1_ANY
+         || BattlerStatCanRise(battlerAtk, AI_DATA->abilities[battlerAtk], STAT_SPATK)
+         || BattlerStatCanRise(battlerAtk, AI_DATA->abilities[battlerAtk], STAT_SPDEF))
+            score += 2;
+        break;
     case EFFECT_PSYCHO_SHIFT:
         if (gBattleMons[battlerAtk].status1 & STATUS1_PSN_ANY)
             IncreasePoisonScore(battlerAtk, battlerDef, move, &score);
@@ -4877,6 +4893,13 @@ static s16 AI_CheckViability(u8 battlerAtk, u8 battlerDef, u16 move, s16 score)
         //break;
     //case EFFECT_SKY_DROP
         //break;
+    case EFFECT_JUNGLE_HEALING:
+        if (ShouldRecover(battlerAtk, battlerDef, move, 25)
+         || ShouldRecover(BATTLE_PARTNER(battlerAtk), battlerDef, move, 25)
+         || gBattleMons[battlerAtk].status1 & STATUS1_ANY
+         || gBattleMons[BATTLE_PARTNER(battlerAtk)].status1 & STATUS1_ANY)
+            score += 3;
+        break;
     } // move effect checks
 
     return score;

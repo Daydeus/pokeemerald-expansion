@@ -822,47 +822,47 @@ s32 AI_CalcDamage(u16 move, u8 battlerAtk, u8 battlerDef, u8 *typeEffectiveness,
         else
             dmg = (critDmg + normalDmg * (critChance - 1)) / critChance;
 
-        // Handle dynamic move damage
-        switch (gBattleMoves[move].effect)
+        if (!gBattleStruct->zmove.active)
         {
-        case EFFECT_LEVEL_DAMAGE:
-        case EFFECT_PSYWAVE:
-            dmg = gBattleMons[battlerAtk].level * (AI_DATA->abilities[battlerAtk] == ABILITY_PARENTAL_BOND ? 2 : 1);
-            break;
-        case EFFECT_DRAGON_RAGE:
-            dmg = 40 * (AI_DATA->abilities[battlerAtk] == ABILITY_PARENTAL_BOND ? 2 : 1);
-            break;
-        case EFFECT_SONICBOOM:
-            dmg = 20 * (AI_DATA->abilities[battlerAtk] == ABILITY_PARENTAL_BOND ? 2 : 1);
-            break;
-        case EFFECT_MULTI_HIT:
-            dmg *= (AI_DATA->abilities[battlerAtk] == ABILITY_SKILL_LINK ? 5 : 3);
-            break;
-        case EFFECT_TRIPLE_KICK:
-            dmg *= (AI_DATA->abilities[battlerAtk] == ABILITY_SKILL_LINK ? 6 : 5);
-            break;
-        case EFFECT_ENDEAVOR:
-            // If target has less HP than user, Endeavor does no damage
-            dmg = max(0, gBattleMons[battlerDef].hp - gBattleMons[battlerAtk].hp);
-            break;
-        case EFFECT_SUPER_FANG:
-            dmg = (AI_DATA->abilities[battlerAtk] == ABILITY_PARENTAL_BOND
-                ? max(2, gBattleMons[battlerDef].hp * 3 / 4)
-                : max(1, gBattleMons[battlerDef].hp / 2));
-            break;
-        case EFFECT_FINAL_GAMBIT:
-            dmg = gBattleMons[battlerAtk].hp;
-            break;
+            // Handle dynamic move damage
+            switch (gBattleMoves[move].effect)
+            {
+            case EFFECT_LEVEL_DAMAGE:
+            case EFFECT_PSYWAVE:
+                dmg = gBattleMons[battlerAtk].level * (AI_DATA->abilities[battlerAtk] == ABILITY_PARENTAL_BOND ? 2 : 1);
+                break;
+            case EFFECT_DRAGON_RAGE:
+                dmg = 40 * (AI_DATA->abilities[battlerAtk] == ABILITY_PARENTAL_BOND ? 2 : 1);
+                break;
+            case EFFECT_SONICBOOM:
+                dmg = 20 * (AI_DATA->abilities[battlerAtk] == ABILITY_PARENTAL_BOND ? 2 : 1);
+                break;
+            case EFFECT_MULTI_HIT:
+                dmg *= (AI_DATA->abilities[battlerAtk] == ABILITY_SKILL_LINK ? 5 : 3);
+                break;
+            case EFFECT_ENDEAVOR:
+                // If target has less HP than user, Endeavor does no damage
+                dmg = max(0, gBattleMons[battlerDef].hp - gBattleMons[battlerAtk].hp);
+                break;
+            case EFFECT_SUPER_FANG:
+                dmg = (AI_DATA->abilities[battlerAtk] == ABILITY_PARENTAL_BOND
+                    ? max(2, gBattleMons[battlerDef].hp * 3 / 4)
+                    : max(1, gBattleMons[battlerDef].hp / 2));
+                break;
+            case EFFECT_FINAL_GAMBIT:
+                dmg = gBattleMons[battlerAtk].hp;
+                break;
+            }
+
+            // Handle other multi-strike moves
+            if (gBattleMoves[move].flags & FLAG_TWO_STRIKES)
+                dmg *= 2;
+            else if (gBattleMoves[move].flags & FLAG_THREE_STRIKES || (move == MOVE_WATER_SHURIKEN && gBattleMons[battlerAtk].species == SPECIES_GRENINJA_ASH))
+                dmg *= 3;
+
+            if (dmg == 0)
+                dmg = 1;
         }
-
-        // Handle other multi-strike moves
-        if (gBattleMoves[move].flags & FLAG_TWO_STRIKES)
-            dmg *= 2;
-        else if (gBattleMoves[move].flags & FLAG_THREE_STRIKES || (move == MOVE_WATER_SHURIKEN && gBattleMons[battlerAtk].species == SPECIES_GRENINJA_ASH))
-            dmg *= 3;
-
-        if (dmg == 0)
-            dmg = 1;
     }
     else
     {
@@ -1096,10 +1096,11 @@ u8 AI_WhoStrikesFirst(u8 battlerAI, u8 battler2, u16 moveConsidered)
     prioAI = GetMovePriority(battlerAI, moveConsidered);
     for (i = 0; i < MAX_MON_MOVES; i++)
     {
-        if (battler2Moves[i] == 0 || battler2Moves[i] == 0xFFFF)
+        prioBattler2 = GetMovePriority(battler2, battler2Moves[i]);
+        if (battler2Moves[i] == 0 || battler2Moves[i] == 0xFFFF
+            || (prioBattler2 > prioAI && !CanIndexMoveFaintTarget(battler2, battlerAI, i , 2)))
             continue;
 
-        prioBattler2 = GetMovePriority(battler2, battler2Moves[i]);
         if (prioAI > prioBattler2)
             fasterAI++;
         else if (prioBattler2 > prioAI)
@@ -2051,6 +2052,7 @@ bool32 IsHealingMoveEffect(u16 effect)
     case EFFECT_HEALING_WISH:
     case EFFECT_HEAL_PULSE:
     case EFFECT_REST:
+    case EFFECT_JUNGLE_HEALING:
         return TRUE;
     default:
         return FALSE;
@@ -2967,14 +2969,12 @@ bool32 AI_CanGiveFrostbite(u8 battlerAtk, u8 battlerDef, u16 defAbility, u8 batt
     return TRUE;
 }
 
-bool32 AI_CanBeInfatuated(u8 battlerAtk, u8 battlerDef, u16 defAbility, u8 atkGender, u8 defGender)
+bool32 AI_CanBeInfatuated(u8 battlerAtk, u8 battlerDef, u16 defAbility)
 {
     if ((gBattleMons[battlerDef].status2 & STATUS2_INFATUATION)
       || AI_GetMoveEffectiveness(AI_THINKING_STRUCT->moveConsidered, battlerAtk, battlerDef) == AI_EFFECTIVENESS_x0
       || defAbility == ABILITY_OBLIVIOUS
-      || atkGender == defGender
-      || atkGender == MON_GENDERLESS
-      || defGender == MON_GENDERLESS
+      || !AreBattlersOfOppositeGender(battlerAtk, battlerDef)
       || AI_IsAbilityOnSide(battlerDef, ABILITY_AROMA_VEIL))
         return FALSE;
     return TRUE;
