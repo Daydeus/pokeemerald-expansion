@@ -13,6 +13,7 @@ enum TestResult
     TEST_RESULT_INVALID,
     TEST_RESULT_ERROR,
     TEST_RESULT_TIMEOUT,
+    TEST_RESULT_CRASH,
     TEST_RESULT_TODO,
 };
 
@@ -38,8 +39,6 @@ struct TestRunnerState
 {
     u8 state;
     u8 exitCode;
-    s32 tests;
-    s32 passes;
     const char *skipFilename;
     const struct Test *test;
     u32 processCosts[MAX_PROCESSES];
@@ -47,6 +46,7 @@ struct TestRunnerState
     u8 result;
     u8 expectedResult;
     bool8 expectLeaks:1;
+    bool8 inBenchmark:1;
     u32 timeoutSeconds;
 };
 
@@ -159,6 +159,49 @@ s32 MgbaPrintf_(const char *fmt, ...);
             Test_ExitWithResult(TEST_RESULT_FAIL, "%s:%d: EXPECT_GE(%d, %d) failed", gTestRunnerState.test->filename, __LINE__, _a, _b); \
     } while (0)
 
+struct Benchmark { s32 ticks; };
+
+static inline void BenchmarkStart(void)
+{
+    gTestRunnerState.inBenchmark = TRUE;
+    REG_TM3CNT = (TIMER_ENABLE | TIMER_64CLK) << 16;
+}
+
+static inline struct Benchmark BenchmarkStop(void)
+{
+    REG_TM3CNT_H = 0;
+    gTestRunnerState.inBenchmark = FALSE;
+    return (struct Benchmark) { REG_TM3CNT_L };
+}
+
+#define BENCHMARK(id) \
+    for (BenchmarkStart(); gTestRunnerState.inBenchmark; *(id) = BenchmarkStop())
+
+// An approximation of how much overhead benchmarks introduce.
+#define BENCHMARK_ABS 2
+
+// An approximation for what percentage faster a benchmark has to be for
+// us to be confident that it's faster than another.
+#define BENCHMARK_REL 95
+
+#define EXPECT_FASTER(a, b) \
+    do \
+    { \
+        u32 a_ = (a).ticks; u32 b_ = (b).ticks; \
+        MgbaPrintf_(#a ": %d ticks, " #b ": %d ticks", a_, b_); \
+        if (((a_ - BENCHMARK_ABS) * BENCHMARK_REL) >= (b_ * 100)) \
+            Test_ExitWithResult(TEST_RESULT_FAIL, "%s:%d: EXPECT_FASTER(" #a ", " #b ") failed", gTestRunnerState.test->filename, __LINE__); \
+    } while (0)
+
+#define EXPECT_SLOWER(a, b) \
+    do \
+    { \
+        u32 a_ = (a).ticks; u32 b_ = (b).ticks; \
+        MgbaPrintf_(#a ": %d ticks, " #b ": %d ticks", a_, b_); \
+        if ((a_ * 100) <= ((b_ - BENCHMARK_ABS) * BENCHMARK_REL)) \
+            Test_ExitWithResult(TEST_RESULT_FAIL, "%s:%d: EXPECT_SLOWER(" #a ", " #b ") failed", gTestRunnerState.test->filename, __LINE__); \
+    } while (0)
+
 #define KNOWN_FAILING \
     Test_ExpectedResult(TEST_RESULT_FAIL)
 
@@ -168,9 +211,9 @@ s32 MgbaPrintf_(const char *fmt, ...);
 #define PARAMETRIZE if (gFunctionTestRunnerState->parameters++ == gFunctionTestRunnerState->runParameter)
 
 #define TO_DO \
-    Test_ExpectedResult(TEST_RESULT_TODO)
-
-#define EXPECT_TO_DO \
-    Test_ExitWithResult(TEST_RESULT_TODO, "%s:%d: EXPECT_TO_DO", gTestRunnerState.test->filename, __LINE__)
+    do { \
+        Test_ExpectedResult(TEST_RESULT_TODO); \
+        Test_ExitWithResult(TEST_RESULT_TODO, "%s:%d: EXPECT_TO_DO", gTestRunnerState.test->filename, __LINE__); \
+    } while (0)
 
 #endif
