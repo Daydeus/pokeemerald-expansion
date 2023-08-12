@@ -3022,6 +3022,15 @@ void SetMoveEffect(bool32 primary, u32 certain)
             }
             if (gBattleMons[gEffectBattler].status1)
                 break;
+            if (gBattleMons[gBattlerTarget].hp == gBattleMons[gBattlerTarget].maxHP
+              && (primary == TRUE || certain == MOVE_EFFECT_CERTAIN))
+            {
+                BattleScriptPush(gBattlescriptCurrInstr + 1);
+                gBattlescriptCurrInstr = BattleScript_PSNPrevention;
+
+                gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_STATUS_PKMN_COMPLETELY_HEALTHY;
+                RESET_RETURN
+            }
             if (CanBePoisoned(gBattleScripting.battler, gEffectBattler))
             {
                 // It's redundant, because at this point we know the status1 value is 0.
