@@ -2887,6 +2887,15 @@ void SetMoveEffect(bool32 primary, u32 certain)
                 gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_STATUS_HAD_NO_EFFECT;
                 RESET_RETURN
             }
+            if (gBattleMons[gBattlerTarget].hp == gBattleMons[gBattlerTarget].maxHP
+              && (primary == TRUE || certain == MOVE_EFFECT_CERTAIN))
+            {
+                BattleScriptPush(gBattlescriptCurrInstr + 1);
+                gBattlescriptCurrInstr = BattleScript_PSNPrevention;
+
+                gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_STATUS_PKMN_COMPLETELY_HEALTHY;
+                RESET_RETURN
+            }
             if (!CanBePoisoned(gBattleScripting.battler, gEffectBattler))
                 break;
 

@@ -6289,7 +6289,8 @@ bool32 CanBePoisoned(u8 battlerAttacker, u8 battlerTarget)
      || ability == ABILITY_COMATOSE
      || IsAbilityOnSide(battlerTarget, ABILITY_PASTEL_VEIL)
      || IsAbilityStatusProtected(battlerTarget)
-     || IsBattlerTerrainAffected(battlerTarget, STATUS_FIELD_MISTY_TERRAIN))
+     || IsBattlerTerrainAffected(battlerTarget, STATUS_FIELD_MISTY_TERRAIN)
+     || gBattleMons[battlerTarget].hp == gBattleMons[battlerTarget].maxHP)
         return FALSE;
     return TRUE;
 }
