@@ -1513,6 +1513,7 @@ const u8 gText_EntryAnimations[] = _("ENTRY ANIM.");
 const u8 gText_ClockFormat[] = _("CLOCK FORMAT");
 const u8 gText_ClockFormat12Hour[] = _("12HR");
 const u8 gText_ClockFormat24Hour[] = _("24HR");
+const u8 gText_ExpShare[] = _("EXP SHARE");
 const u8 gText_BattleStyle[] = _("BATTLE STYLE");
 const u8 gText_BattleStyleShift[] = _("SHIFT");
 const u8 gText_BattleStyleSet[] = _("SET");

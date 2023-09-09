@@ -320,6 +320,7 @@ extern const u8 gText_EntryAnimations[];
 extern const u8 gText_ClockFormat[];
 extern const u8 gText_ClockFormat12Hour[];
 extern const u8 gText_ClockFormat24Hour[];
+extern const u8 gText_ExpShare[];
 extern const u8 gText_BattleStyle[];
 extern const u8 gText_BattleStyleShift[];
 extern const u8 gText_BattleStyleSet[];

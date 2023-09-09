@@ -121,7 +121,6 @@ static void SpriteCB_UnusedBattleInit_Main(struct Sprite *sprite);
 static void TrySpecialEvolution(void);
 static u32 Crc32B (const u8 *data, u32 size);
 static u32 GeneratePartyHash(const struct Trainer *trainer, u32 i);
-static void CustomTrainerPartyAssignMoves(struct Pokemon *mon, const struct TrainerMonCustomized *partyEntry);
 static u8 GetNPCTrainerPartyLevelScaling(void);
 static u16 TryLevelScalingEvolution(u16 species, u8 level);
 
@@ -4266,16 +4265,16 @@ static void HandleTurnActionSelectionState(void)
                     if (FlagGet(B_FLAG_NO_BAG_USE) || (gBattleTypeFlags & BATTLE_TYPE_TRAINER && (gSaveBlock2Ptr->optionsBattleItems == OPTIONS_BATTLE_ITEMS_FOE_ONLY
                     || gSaveBlock2Ptr->optionsBattleItems == OPTIONS_BATTLE_ITEMS_NOBODY)))
                     {
-                        RecordedBattle_ClearBattlerAction(gActiveBattler, 1);
+                        RecordedBattle_ClearBattlerAction(battler, 1);
                         
                         if (FlagGet(B_FLAG_NO_BAG_USE))
-                            gSelectionBattleScripts[gActiveBattler] = BattleScript_ActionSelectionItemsCantBeUsed;
+                            gSelectionBattleScripts[battler] = BattleScript_ActionSelectionItemsCantBeUsed;
                         else // Blocked by difficulty settings
-                            gSelectionBattleScripts[gActiveBattler] = BattleScript_ActionSelectionItemsBlockedByDifficulty;
+                            gSelectionBattleScripts[battler] = BattleScript_ActionSelectionItemsBlockedByDifficulty;
 
-                        gBattleCommunication[gActiveBattler] = STATE_SELECTION_SCRIPT;
-                        *(gBattleStruct->selectionScriptFinished + gActiveBattler) = FALSE;
-                        *(gBattleStruct->stateIdAfterSelScript + gActiveBattler) = STATE_BEFORE_ACTION_CHOSEN;
+                        gBattleCommunication[battler] = STATE_SELECTION_SCRIPT;
+                        *(gBattleStruct->selectionScriptFinished + battler) = FALSE;
+                        *(gBattleStruct->stateIdAfterSelScript + battler) = STATE_BEFORE_ACTION_CHOSEN;
                         return;
                     }
 

@@ -3,6 +3,7 @@
 #include "bg.h"
 #include "gpu_regs.h"
 #include "international_string_util.h"
+#include "event_data.h"
 #include "malloc.h"
 #include "main.h"
 #include "menu.h"
@@ -47,6 +48,7 @@ enum
 // Difficulty Menu items
 enum
 {
+    MENUITEM_DIFFICULTY_EXPSHARE,
     MENUITEM_DIFFICULTY_BATTLESTYLE,
     MENUITEM_DIFFICULTY_BATTLEITEMS,
     MENUITEM_DIFFICULTY_LEVELSCALING,
@@ -178,6 +180,7 @@ static void DrawChoices_ClockFormat(s32 selection, s32 y);
 static void DrawChoices_UnitSystem(s32 selection, s32 y);
 static void DrawChoices_FrameType(s32 selection, s32 y);
 // Difficulty Draw Choices
+static void DrawChoices_ExpShare(s32 selection, s32 y);
 static void DrawChoices_BattleStyle(s32 selection, s32 y);
 static void DrawChoices_BattleItems(s32 selection, s32 y);
 static void DrawChoices_LevelScaling(s32 selection, s32 y);
@@ -241,6 +244,7 @@ struct // MENU_DIFFICULTY
     s32 (*processInput)(s32 selection);
 } static const sItemFunctionsDifficulty[MENUITEM_DIFFICULTY_COUNT] =
 {
+    [MENUITEM_DIFFICULTY_EXPSHARE]          = {DrawChoices_ExpShare,        ProcessInput_Options_Two},
     [MENUITEM_DIFFICULTY_BATTLESTYLE]       = {DrawChoices_BattleStyle,     ProcessInput_Options_Two},
     [MENUITEM_DIFFICULTY_BATTLEITEMS]       = {DrawChoices_BattleItems,     ProcessInput_Options_Four},
     [MENUITEM_DIFFICULTY_LEVELSCALING]      = {DrawChoices_LevelScaling,    ProcessInput_Options_Two},
@@ -267,6 +271,7 @@ static const u8 *const sOptionMenuItemsNamesGeneral[MENUITEM_GENERAL_COUNT] =
 
 static const u8 *const sOptionMenuItemsNamesDifficulty[MENUITEM_DIFFICULTY_COUNT] =
 {
+    [MENUITEM_DIFFICULTY_EXPSHARE]       = gText_ExpShare,
     [MENUITEM_DIFFICULTY_BATTLESTYLE]    = gText_BattleStyle,
     [MENUITEM_DIFFICULTY_BATTLEITEMS]    = gText_BattleItems,
     [MENUITEM_DIFFICULTY_LEVELSCALING]   = gText_LevelScaling,
@@ -307,6 +312,7 @@ static bool8 CheckConditions(s32 selection)
     case MENU_DIFFICULTY:
         switch(selection)
         {
+        case MENUITEM_DIFFICULTY_EXPSHARE:      return TRUE;
         case MENUITEM_DIFFICULTY_BATTLESTYLE:   return TRUE;
         case MENUITEM_DIFFICULTY_BATTLEITEMS:   return TRUE;
         case MENUITEM_DIFFICULTY_LEVELSCALING:  return TRUE;
@@ -358,16 +364,19 @@ static const u8 *const sOptionMenuItemDescriptionsGeneral[MENUITEM_GENERAL_COUNT
 //------------------------------------------------------------------
 // Difficulty Descriptions
 //------------------------------------------------------------------
+static const u8 sText_Desc_ExpShare_Off[]          = _("Your Pokémon must battle to receive\nexperience.");
+static const u8 sText_Desc_ExpShare_On[]           = _("Your Pokémon share experience with\nparty members who didn't battle.");
 static const u8 sText_Desc_BattleStyle_Shift[]     = _("You are allowed to switch your\nPokémon after the foe faints.");
 static const u8 sText_Desc_BattleStyle_Set[]       = _("No free switch after fainting a foe\nin battle.");
 static const u8 sText_Desc_BattleItems[]           = _("Who can use items from the BAG during\ntrainer battles.");
-static const u8 sText_Desc_LevelScaling_Off[]      = _("Foe trainers' Pokemon have their\nintended level.");
-static const u8 sText_Desc_LevelScaling_On[]       = _("Foe trainers' Pokemon have their\nlevel raised to better match yours.");
+static const u8 sText_Desc_LevelScaling_Off[]      = _("Foe trainers' Pokémon have their\nintended level.");
+static const u8 sText_Desc_LevelScaling_On[]       = _("Foe trainers' Pokémon have their\nlevel raised to better match yours.");
 static const u8 sText_Desc_EnemyAI_Normal[]        = _("Foes have their default AI.");
 static const u8 sText_Desc_EnemyAI_Smart[]         = _("Foes have smarter AI and make better\ndecisions.");
 
 static const u8 *const sOptionMenuItemDescriptionsDifficulty[MENUITEM_DIFFICULTY_COUNT][2] =
 {
+    [MENUITEM_DIFFICULTY_EXPSHARE]        = {sText_Desc_ExpShare_Off,             sText_Desc_ExpShare_On},
     [MENUITEM_DIFFICULTY_BATTLESTYLE]     = {sText_Desc_BattleStyle_Shift,       sText_Desc_BattleStyle_Set},
     [MENUITEM_DIFFICULTY_BATTLEITEMS]     = {sText_Desc_BattleItems,             sText_Empty},
     [MENUITEM_DIFFICULTY_LEVELSCALING]    = {sText_Desc_LevelScaling_Off,        sText_Desc_LevelScaling_On},
@@ -615,6 +624,7 @@ void CB2_InitOptionMenu(void)
         sOptions->sel_general[MENUITEM_GENERAL_UNIT_SYSTEM]     = gSaveBlock2Ptr->optionsUnitSystem;
         sOptions->sel_general[MENUITEM_GENERAL_FRAMETYPE]       = gSaveBlock2Ptr->optionsWindowFrameType;
 
+        sOptions->sel_difficulty[MENUITEM_DIFFICULTY_EXPSHARE]      = FlagGet(I_EXP_SHARE_FLAG);
         sOptions->sel_difficulty[MENUITEM_DIFFICULTY_BATTLESTYLE]   = gSaveBlock2Ptr->optionsBattleStyle;
         sOptions->sel_difficulty[MENUITEM_DIFFICULTY_BATTLEITEMS]   = gSaveBlock2Ptr->optionsBattleItems;
         sOptions->sel_difficulty[MENUITEM_DIFFICULTY_LEVELSCALING]  = gSaveBlock2Ptr->optionsLevelScaling;
@@ -807,6 +817,7 @@ static void Task_OptionMenuSave(u8 taskId)
     gSaveBlock2Ptr->optionsUnitSystem         = sOptions->sel_general[MENUITEM_GENERAL_UNIT_SYSTEM];
     gSaveBlock2Ptr->optionsWindowFrameType    = sOptions->sel_general[MENUITEM_GENERAL_FRAMETYPE];
 
+    sOptions->sel_difficulty[MENUITEM_DIFFICULTY_EXPSHARE] ? FlagSet(I_EXP_SHARE_FLAG) : FlagClear(I_EXP_SHARE_FLAG);
     gSaveBlock2Ptr->optionsBattleStyle        = sOptions->sel_difficulty[MENUITEM_DIFFICULTY_BATTLESTYLE];
     gSaveBlock2Ptr->optionsBattleItems        = sOptions->sel_difficulty[MENUITEM_DIFFICULTY_BATTLEITEMS];
     gSaveBlock2Ptr->optionsLevelScaling       = sOptions->sel_difficulty[MENUITEM_DIFFICULTY_LEVELSCALING];
@@ -1141,6 +1152,16 @@ static void DrawChoices_FrameType(s32 selection, s32 y)
 
     DrawOptionMenuChoice(gText_FrameType, 104, y, 0, active);
     DrawOptionMenuChoice(text, 128, y, 1, active);
+}
+
+static void DrawChoices_ExpShare(s32 selection, s32 y)
+{
+    bool8 active = CheckConditions(MENUITEM_DIFFICULTY_EXPSHARE);
+    u8 styles[2] = {0};
+    styles[selection] = 1;
+
+    DrawOptionMenuChoice(gText_OptionOff, 104, y, styles[0], active);
+    DrawOptionMenuChoice(gText_OptionOn, GetStringRightAlignXOffset(FONT_NORMAL, gText_OptionOn, 198), y, styles[1], active);
 }
 
 static void DrawChoices_BattleStyle(s32 selection, s32 y)
