@@ -3,7 +3,7 @@
 
 ASSUMPTIONS
 {
-    ASSUME(gBattleMoves[MOVE_TRI_ATTACK].effect == EFFECT_TRI_ATTACK);
+    ASSUME(MoveHasAdditionalEffect(MOVE_TRI_ATTACK, MOVE_EFFECT_TRI_ATTACK) == TRUE);
 }
 
 SINGLE_BATTLE_TEST("Tri Attack can inflict paralysis, burn or freeze")
@@ -25,11 +25,9 @@ SINGLE_BATTLE_TEST("Tri Attack can inflict paralysis, burn or freeze")
         ANIMATION(ANIM_TYPE_STATUS, statusAnim, opponent);
         if (statusAnim == B_ANIM_STATUS_BRN) {
             STATUS_ICON(opponent, burn: TRUE);
-        }
-        else if (statusAnim == B_ANIM_STATUS_FRZ) {
+        } else if (statusAnim == B_ANIM_STATUS_FRZ) {
             STATUS_ICON(opponent, freeze: TRUE);
-        }
-        else if (statusAnim == B_ANIM_STATUS_PRZ) {
+        } else if (statusAnim == B_ANIM_STATUS_PRZ) {
             STATUS_ICON(opponent, paralysis: TRUE);
         }
     }
@@ -54,15 +52,15 @@ SINGLE_BATTLE_TEST("Tri Attack cannot paralyze/burn/freeze electric/fire/ice typ
     } SCENE {
         ANIMATION(ANIM_TYPE_MOVE, MOVE_TRI_ATTACK, player);
         HP_BAR(opponent);
-        NOT ANIMATION(ANIM_TYPE_STATUS, statusAnim, opponent);
-        if (statusAnim == B_ANIM_STATUS_BRN) {
-            NOT STATUS_ICON(opponent, burn: TRUE);
-        }
-        else if (statusAnim == B_ANIM_STATUS_FRZ) {
-            NOT STATUS_ICON(opponent, freeze: TRUE);
-        }
-        else if (statusAnim == B_ANIM_STATUS_PRZ) {
-            NOT STATUS_ICON(opponent, paralysis: TRUE);
+        NONE_OF {
+            ANIMATION(ANIM_TYPE_STATUS, statusAnim, opponent);
+            if (statusAnim == B_ANIM_STATUS_BRN) {
+                STATUS_ICON(opponent, burn: TRUE);
+            } else if (statusAnim == B_ANIM_STATUS_FRZ) {
+                STATUS_ICON(opponent, freeze: TRUE);
+            } else if (statusAnim == B_ANIM_STATUS_PRZ) {
+                STATUS_ICON(opponent, paralysis: TRUE);
+            }
         }
     }
 }
@@ -72,16 +70,13 @@ SINGLE_BATTLE_TEST("Tri Attack cannot paralyze/burn/freeze pokemon with abilitie
     u8 statusAnim;
     u16 species, ability;
     u32 rng;
-    PARAMETRIZE { statusAnim = B_ANIM_STATUS_PRZ; rng = MOVE_EFFECT_PARALYSIS; species = SPECIES_RAICHU; ability = ABILITY_LIGHTNING_ROD; }
-    PARAMETRIZE { statusAnim = B_ANIM_STATUS_PRZ; rng = MOVE_EFFECT_PARALYSIS; species = SPECIES_JOLTEON; ability = ABILITY_VOLT_ABSORB; }
-    #if P_GEN_4_POKEMON == TRUE
-    PARAMETRIZE { statusAnim = B_ANIM_STATUS_PRZ; rng = MOVE_EFFECT_PARALYSIS; species = SPECIES_ELECTIVIRE; ability = ABILITY_MOTOR_DRIVE; }
-    #endif // P_GEN_4_POKEMON
-    #if P_GEN_7_POKEMON == TRUE
+    PARAMETRIZE { statusAnim = B_ANIM_STATUS_PRZ; rng = MOVE_EFFECT_PARALYSIS; species = SPECIES_PERSIAN; ability = ABILITY_LIMBER; }
+    PARAMETRIZE { statusAnim = B_ANIM_STATUS_PRZ; rng = MOVE_EFFECT_PARALYSIS; species = SPECIES_KOMALA; ability = ABILITY_COMATOSE; }
     PARAMETRIZE { statusAnim = B_ANIM_STATUS_BRN; rng = MOVE_EFFECT_BURN; species = SPECIES_DEWPIDER; ability = ABILITY_WATER_BUBBLE; }
-    #endif // P_GEN_7_POKEMON
     PARAMETRIZE { statusAnim = B_ANIM_STATUS_BRN; rng = MOVE_EFFECT_BURN; species = SPECIES_SEAKING; ability = ABILITY_WATER_VEIL; }
+    PARAMETRIZE { statusAnim = B_ANIM_STATUS_BRN; rng = MOVE_EFFECT_BURN; species = SPECIES_KOMALA; ability = ABILITY_COMATOSE; }
     PARAMETRIZE { statusAnim = B_ANIM_STATUS_FRZ; rng = MOVE_EFFECT_FREEZE; species = SPECIES_CAMERUPT; ability = ABILITY_MAGMA_ARMOR; }
+    PARAMETRIZE { statusAnim = B_ANIM_STATUS_FRZ; rng = MOVE_EFFECT_FREEZE; species = SPECIES_KOMALA; ability = ABILITY_COMATOSE; }
 
     GIVEN {
         PLAYER(SPECIES_WOBBUFFET);
@@ -92,15 +87,15 @@ SINGLE_BATTLE_TEST("Tri Attack cannot paralyze/burn/freeze pokemon with abilitie
     } SCENE {
         ANIMATION(ANIM_TYPE_MOVE, MOVE_TRI_ATTACK, player);
         HP_BAR(opponent);
-        NOT ANIMATION(ANIM_TYPE_STATUS, statusAnim, opponent);
-        if (statusAnim == B_ANIM_STATUS_BRN) {
-            NOT STATUS_ICON(opponent, burn: TRUE);
-        }
-        else if (statusAnim == B_ANIM_STATUS_FRZ) {
-            NOT STATUS_ICON(opponent, freeze: TRUE);
-        }
-        else if (statusAnim == B_ANIM_STATUS_PRZ) {
-            NOT STATUS_ICON(opponent, paralysis: TRUE);
+        NONE_OF {
+            ANIMATION(ANIM_TYPE_STATUS, statusAnim, opponent);
+            if (statusAnim == B_ANIM_STATUS_BRN) {
+                STATUS_ICON(opponent, burn: TRUE);
+            } else if (statusAnim == B_ANIM_STATUS_FRZ) {
+                STATUS_ICON(opponent, freeze: TRUE);
+            } else if (statusAnim == B_ANIM_STATUS_PRZ) {
+                STATUS_ICON(opponent, paralysis: TRUE);
+            }
         }
     }
 }
@@ -121,15 +116,15 @@ SINGLE_BATTLE_TEST("Tri Attack cannot paralyze/burn/freeze a mon which is alread
     } SCENE {
         ANIMATION(ANIM_TYPE_MOVE, MOVE_TRI_ATTACK, player);
         HP_BAR(opponent);
-        NOT ANIMATION(ANIM_TYPE_STATUS, statusAnim, opponent);
-        if (statusAnim == B_ANIM_STATUS_BRN) {
-            NOT STATUS_ICON(opponent, burn: TRUE);
-        }
-        else if (statusAnim == B_ANIM_STATUS_FRZ) {
-            NOT STATUS_ICON(opponent, freeze: TRUE);
-        }
-        else if (statusAnim == B_ANIM_STATUS_PRZ) {
-            NOT STATUS_ICON(opponent, paralysis: TRUE);
+        NONE_OF {
+            ANIMATION(ANIM_TYPE_STATUS, statusAnim, opponent);
+            if (statusAnim == B_ANIM_STATUS_BRN) {
+                STATUS_ICON(opponent, burn: TRUE);
+            } else if (statusAnim == B_ANIM_STATUS_FRZ) {
+                STATUS_ICON(opponent, freeze: TRUE);
+            } else if (statusAnim == B_ANIM_STATUS_PRZ) {
+                STATUS_ICON(opponent, paralysis: TRUE);
+            }
         }
     }
 }

@@ -153,6 +153,7 @@ enum
     LIST_SIDE_STEALTH_ROCK,
     LIST_SIDE_TOXIC_SPIKES,
     LIST_SIDE_STICKY_WEB,
+    LIST_SIDE_STEELSURGE,
 };
 
 enum
@@ -228,6 +229,7 @@ static const u8 sText_PP[] = _("PP");
 static const u8 sText_StealthRock[] = _("Stealth Rock");
 static const u8 sText_ToxicSpikes[] = _("Toxic Spikes");
 static const u8 sText_StickyWeb[] = _("Sticky Web");
+static const u8 sText_Steelsurge[] = _("Steelsurge");
 static const u8 sText_AI[] = _("AI");
 static const u8 sText_NoBadMoves[] = _("No Bad Moves");
 static const u8 sText_Viability[] = _("Viability");
@@ -455,6 +457,7 @@ static const struct ListMenuItem sSideStatusListItems[] =
     {sText_StealthRock, LIST_SIDE_STEALTH_ROCK},
     {sText_ToxicSpikes, LIST_SIDE_TOXIC_SPIKES},
     {sText_StickyWeb, LIST_SIDE_STICKY_WEB},
+    {sText_Steelsurge, LIST_SIDE_STEELSURGE},
 };
 
 static const struct ListMenuItem sSecondaryListItems[] =
@@ -716,7 +719,7 @@ void CB2_BattleDebugMenu(void)
         data->currentMainListItemId = 0;
         data->activeWindow = ACTIVE_WIN_MAIN;
         data->secondaryListTaskId = 0xFF;
-        CopyWindowToVram(data->mainListWindowId, 3);
+        CopyWindowToVram(data->mainListWindowId, COPYWIN_FULL);
         gMain.state++;
         break;
     case 5:
@@ -736,8 +739,8 @@ static void PutMovesPointsText(struct BattleDebugMenu *data)
     for (i = 0; i < MAX_MON_MOVES; i++)
     {
         text[0] = CHAR_SPACE;
-        StringCopy(text + 1, gMoveNames[gBattleMons[data->aiBattlerId].moves[i]]);
-        AddTextPrinterParameterized(data->aiMovesWindowId, 1, text, 0, i * 15, 0, NULL);
+        StringCopy(text + 1, GetMoveName(gBattleMons[data->aiBattlerId].moves[i]));
+        AddTextPrinterParameterized(data->aiMovesWindowId, FONT_NORMAL, text, 0, i * 15, 0, NULL);
         for (count = 0, j = 0; j < MAX_BATTLERS_COUNT; j++)
         {
             if (data->spriteIds.aiIconSpriteIds[j] == 0xFF)
@@ -746,19 +749,35 @@ static void PutMovesPointsText(struct BattleDebugMenu *data)
             ConvertIntToDecimalStringN(text,
                                        gBattleStruct->aiFinalScore[data->aiBattlerId][battlerDef][i],
                                        STR_CONV_MODE_RIGHT_ALIGN, 3);
-            AddTextPrinterParameterized(data->aiMovesWindowId, 1, text, 83 + count * 54, i * 15, 0, NULL);
+            AddTextPrinterParameterized(data->aiMovesWindowId, FONT_NORMAL, text, 83 + count * 54, i * 15, 0, NULL);
 
             ConvertIntToDecimalStringN(text,
                                        AI_DATA->simulatedDmg[data->aiBattlerId][battlerDef][i],
                                        STR_CONV_MODE_RIGHT_ALIGN, 3);
-            AddTextPrinterParameterized(data->aiMovesWindowId, 1, text, 110 + count * 54, i * 15, 0, NULL);
+            AddTextPrinterParameterized(data->aiMovesWindowId, FONT_NORMAL, text, 110 + count * 54, i * 15, 0, NULL);
 
             count++;
         }
     }
 
-    CopyWindowToVram(data->aiMovesWindowId, 3);
+    CopyWindowToVram(data->aiMovesWindowId, COPYWIN_FULL);
     Free(text);
+}
+
+static void CleanUpAiInfoWindow(u8 taskId)
+{
+    u32 i;
+    struct BattleDebugMenu *data = GetStructPtr(taskId);
+
+    FreeMonIconPalettes();
+    for (i = 0; i < MAX_BATTLERS_COUNT; i++)
+    {
+        if (data->spriteIds.aiIconSpriteIds[i] != 0xFF)
+            FreeAndDestroyMonIconSprite(&gSprites[data->spriteIds.aiIconSpriteIds[i]]);
+    }
+    FreeAndDestroyMonPicSprite(data->aiMonSpriteId);
+    ClearWindowTilemap(data->aiMovesWindowId);
+    RemoveWindow(data->aiMovesWindowId);
 }
 
 static void Task_ShowAiPoints(u8 taskId)
@@ -766,6 +785,7 @@ static void Task_ShowAiPoints(u8 taskId)
     u32 i, count;
     struct WindowTemplate winTemplate;
     struct BattleDebugMenu *data = GetStructPtr(taskId);
+    struct Pokemon *mon;
 
     switch (data->aiViewState)
     {
@@ -780,6 +800,7 @@ static void Task_ShowAiPoints(u8 taskId)
             if (++data->aiBattlerId >= gBattlersCount)
                 data->aiBattlerId = 0;
         }
+        data->battlerId = data->aiBattlerId;
 
         LoadMonIconPalettes();
         for (count = 0, i = 0; i < MAX_BATTLERS_COUNT; i++)
@@ -797,8 +818,11 @@ static void Task_ShowAiPoints(u8 taskId)
                 data->spriteIds.aiIconSpriteIds[i] = 0xFF;
             }
         }
+
+        mon = &GetBattlerParty(data->aiBattlerId)[gBattlerPartyIndexes[data->aiBattlerId]];
+
         data->aiMonSpriteId = CreateMonPicSprite(gBattleMons[data->aiBattlerId].species,
-                                                 gBattleMons[data->aiBattlerId].otId,
+                                                 GetMonData(mon, MON_DATA_IS_SHINY),
                                                  gBattleMons[data->aiBattlerId].personality,
                                                  TRUE,
                                                  39, 130, 15, TAG_NONE);
@@ -815,7 +839,27 @@ static void Task_ShowAiPoints(u8 taskId)
         break;
     // Input
     case 2:
-        if (JOY_NEW(SELECT_BUTTON | B_BUTTON))
+        if (JOY_NEW(R_BUTTON) && IsDoubleBattle())
+        {
+            CleanUpAiInfoWindow(taskId);
+            do {
+                data->battlerId++;
+                data->battlerId %= gBattlersCount;
+            } while (!IsBattlerAlive(data->battlerId));
+            data->aiViewState = 0;
+        }
+        else if (JOY_NEW(L_BUTTON) && IsDoubleBattle())
+        {
+            CleanUpAiInfoWindow(taskId);
+            do {
+                if (data->battlerId == 0)
+                    data->battlerId = gBattlersCount - 1;
+                else
+                    data->battlerId--;
+            } while (!IsBattlerAlive(data->battlerId) || !BattlerHasAi(data->battlerId));
+            data->aiViewState = 0;
+        }
+        else if (JOY_NEW(SELECT_BUTTON | B_BUTTON))
         {
             SwitchToDebugView(taskId);
             HideBg(1);
@@ -841,7 +885,7 @@ static const u8 *const sAiInfoItemNames[] =
 
 static void PutAiInfoText(struct BattleDebugMenu *data)
 {
-    u32 i, j, count;
+    u32 i;
     u8 *text = Alloc(0x50);
 
     FillWindowPixelBuffer(data->aiMovesWindowId, 0x11);
@@ -849,25 +893,25 @@ static void PutAiInfoText(struct BattleDebugMenu *data)
     // item names
     for (i = 0; i < ARRAY_COUNT(sAiInfoItemNames); i++)
     {
-        AddTextPrinterParameterized(data->aiMovesWindowId, 1, sAiInfoItemNames[i], 3, i * 15, 0, NULL);
+        AddTextPrinterParameterized(data->aiMovesWindowId, FONT_NORMAL, sAiInfoItemNames[i], 3, i * 15, 0, NULL);
     }
 
     // items info
     for (i = 0; i < gBattlersCount; i++)
     {
-        if (GET_BATTLER_SIDE(i) == B_SIDE_PLAYER && IsBattlerAlive(i))
+        if (GetBattlerSide(i) == B_SIDE_PLAYER && IsBattlerAlive(i))
         {
-            u16 ability = AI_GetAbility(i);
-            u16 holdEffect = AI_GetHoldEffect(i);
-            u16 item = gBattleMons[i].item;
+            u16 ability = AI_DATA->abilities[i];
+            u16 holdEffect = AI_DATA->holdEffects[i];
+            u16 item = AI_DATA->items[i];
             u8 x = (i == B_POSITION_PLAYER_LEFT) ? 83 + (i) * 75 : 83 + (i-1) * 75;
-            AddTextPrinterParameterized(data->aiMovesWindowId, 0, gAbilityNames[ability], x, 0, 0, NULL);
-            AddTextPrinterParameterized(data->aiMovesWindowId, 0, ItemId_GetName(item), x, 15, 0, NULL);
-            AddTextPrinterParameterized(data->aiMovesWindowId, 0, GetHoldEffectName(holdEffect), x, 30, 0, NULL);
+            AddTextPrinterParameterized(data->aiMovesWindowId, FONT_SMALL, gAbilitiesInfo[ability].name, x, 0, 0, NULL);
+            AddTextPrinterParameterized(data->aiMovesWindowId, FONT_SMALL, ItemId_GetName(item), x, 15, 0, NULL);
+            AddTextPrinterParameterized(data->aiMovesWindowId, FONT_SMALL, GetHoldEffectName(holdEffect), x, 30, 0, NULL);
         }
     }
 
-    CopyWindowToVram(data->aiMovesWindowId, 3);
+    CopyWindowToVram(data->aiMovesWindowId, COPYWIN_FULL);
     Free(text);
 }
 
@@ -875,10 +919,10 @@ static void PutAiPartyText(struct BattleDebugMenu *data)
 {
     u32 i, j, count;
     u8 *text = Alloc(0x50), *txtPtr;
-    struct AiPartyMon *aiMons = AI_PARTY->mons[GET_BATTLER_SIDE(data->aiBattlerId)];
+    struct AiPartyMon *aiMons = AI_PARTY->mons[GetBattlerSide(data->aiBattlerId)];
 
     FillWindowPixelBuffer(data->aiMovesWindowId, 0x11);
-    count = AI_PARTY->count[GET_BATTLER_SIDE(data->aiBattlerId)];
+    count = AI_PARTY->count[GetBattlerSide(data->aiBattlerId)];
     for (i = 0; i < count; i++)
     {
         if (aiMons[i].wasSentInBattle)
@@ -894,13 +938,13 @@ static void PutAiPartyText(struct BattleDebugMenu *data)
             AddTextPrinterParameterized5(data->aiMovesWindowId, FONT_SMALL_NARROW, text, i * 41, 0, 0, NULL, 0, 0);
         }
 
-        txtPtr = StringCopyN(text, gAbilityNames[aiMons[i].ability], 7); // The screen is too small to fit the whole string, so we need to drop the last letters.
+        txtPtr = StringCopyN(text, gAbilitiesInfo[aiMons[i].ability].name, 7); // The screen is too small to fit the whole string, so we need to drop the last letters.
         *txtPtr = EOS;
         AddTextPrinterParameterized5(data->aiMovesWindowId, FONT_SMALL_NARROW, text, i * 41, 15, 0, NULL, 0, 0);
 
         for (j = 0; j < MAX_MON_MOVES; j++)
         {
-            txtPtr = StringCopyN(text, gMoveNames[aiMons[i].moves[j]], 8);
+            txtPtr = StringCopyN(text, GetMoveName(aiMons[i].moves[j]), 8);
             *txtPtr = EOS;
             AddTextPrinterParameterized5(data->aiMovesWindowId, FONT_SMALL_NARROW, text, i * 41, 35 + j * 15, 0, NULL, 0, 0);
         }
@@ -914,7 +958,7 @@ static void PutAiPartyText(struct BattleDebugMenu *data)
         AddTextPrinterParameterized5(data->aiMovesWindowId, FONT_SMALL_NARROW, text, i * 41, 35 + (j + 1) * 15, 0, NULL, 0, 0);
     }
 
-    CopyWindowToVram(data->aiMovesWindowId, 3);
+    CopyWindowToVram(data->aiMovesWindowId, COPYWIN_FULL);
     Free(text);
 }
 
@@ -923,6 +967,7 @@ static void Task_ShowAiKnowledge(u8 taskId)
     u32 i, count;
     struct WindowTemplate winTemplate;
     struct BattleDebugMenu *data = GetStructPtr(taskId);
+    struct Pokemon *mon;
 
     switch (data->aiViewState)
     {
@@ -941,7 +986,7 @@ static void Task_ShowAiKnowledge(u8 taskId)
         LoadMonIconPalettes();
         for (count = 0, i = 0; i < MAX_BATTLERS_COUNT; i++)
         {
-            if (GET_BATTLER_SIDE(i) == B_SIDE_PLAYER && IsBattlerAlive(i))
+            if (GetBattlerSide(i) == B_SIDE_PLAYER && IsBattlerAlive(i))
             {
                 data->spriteIds.aiIconSpriteIds[i] = CreateMonIcon(gBattleMons[i].species,
                                                          SpriteCallbackDummy,
@@ -954,8 +999,11 @@ static void Task_ShowAiKnowledge(u8 taskId)
                 data->spriteIds.aiIconSpriteIds[i] = 0xFF;
             }
         }
+
+        mon = &GetBattlerParty(data->aiBattlerId)[gBattlerPartyIndexes[data->aiBattlerId]];
+
         data->aiMonSpriteId = CreateMonPicSprite(gBattleMons[data->aiBattlerId].species,
-                                                 gBattleMons[data->aiBattlerId].otId,
+                                                 GetMonData(mon, MON_DATA_IS_SHINY),
                                                  gBattleMons[data->aiBattlerId].personality,
                                                  TRUE,
                                                  39, 130, 15, TAG_NONE);
@@ -1000,8 +1048,8 @@ static void Task_ShowAiParty(u8 taskId)
         LoadMonIconPalettes();
         LoadPartyMenuAilmentGfx();
         data->aiBattlerId = data->battlerId;
-        aiMons = AI_PARTY->mons[GET_BATTLER_SIDE(data->aiBattlerId)];
-        for (i = 0; i < AI_PARTY->count[GET_BATTLER_SIDE(data->aiBattlerId)]; i++)
+        aiMons = AI_PARTY->mons[GetBattlerSide(data->aiBattlerId)];
+        for (i = 0; i < AI_PARTY->count[GetBattlerSide(data->aiBattlerId)]; i++)
         {
             u16 species = SPECIES_NONE; // Question mark
             if (aiMons[i].wasSentInBattle && aiMons[i].species)
@@ -1082,19 +1130,7 @@ static void SwitchToDebugViewFromAiParty(u8 taskId)
 
 static void SwitchToDebugView(u8 taskId)
 {
-    u32 i;
-    struct BattleDebugMenu *data = GetStructPtr(taskId);
-
-    FreeMonIconPalettes();
-    for (i = 0; i < MAX_BATTLERS_COUNT; i++)
-    {
-        if (data->spriteIds.aiIconSpriteIds[i] != 0xFF)
-            FreeAndDestroyMonIconSprite(&gSprites[data->spriteIds.aiIconSpriteIds[i]]);
-    }
-    FreeAndDestroyMonPicSprite(data->aiMonSpriteId);
-    ClearWindowTilemap(data->aiMovesWindowId);
-    RemoveWindow(data->aiMovesWindowId);
-
+    CleanUpAiInfoWindow(taskId);
     gTasks[taskId].func = Task_DebugMenuProcessInput;
 }
 
@@ -1177,7 +1213,7 @@ static void Task_DebugMenuProcessInput(u8 taskId)
             data->currentSecondaryListItemId = listItemId;
             data->modifyWindowId = AddWindow(&sModifyWindowTemplate);
             PutWindowTilemap(data->modifyWindowId);
-            CopyWindowToVram(data->modifyWindowId, 3);
+            CopyWindowToVram(data->modifyWindowId, COPYWIN_FULL);
             SetUpModifyArrows(data);
             PrintDigitChars(data);
             data->activeWindow = ACTIVE_WIN_MODIFY;
@@ -1261,8 +1297,8 @@ static void PrintOnBattlerWindow(u8 windowId, u8 battlerId)
     StringCopy(&text[4], gBattleMons[battlerId].nickname);
 
     FillWindowPixelBuffer(windowId, 0x11);
-    AddTextPrinterParameterized(windowId, 1, text, 0, 0, 0, NULL);
-    CopyWindowToVram(windowId, 3);
+    AddTextPrinterParameterized(windowId, FONT_NORMAL, text, 0, 0, 0, NULL);
+    CopyWindowToVram(windowId, COPYWIN_FULL);
 }
 
 static void UpdateWindowsOnChangedBattler(struct BattleDebugMenu *data)
@@ -1368,7 +1404,7 @@ static void CreateSecondaryListMenu(struct BattleDebugMenu *data)
     listTemplate.windowId = data->secondaryListWindowId;
 
     data->secondaryListTaskId = ListMenuInit(&listTemplate, 0, 0);
-    CopyWindowToVram(data->secondaryListWindowId, 3);
+    CopyWindowToVram(data->secondaryListWindowId, COPYWIN_FULL);
 }
 
 static void PadString(const u8 *src, u8 *dst)
@@ -1417,7 +1453,7 @@ static void PrintSecondaryEntries(struct BattleDebugMenu *data)
     case LIST_ITEM_PP:
         for (i = 0; i < 4; i++)
         {
-            PadString(gMoveNames[gBattleMons[data->battlerId].moves[i]], text);
+            PadString(GetMoveName(gBattleMons[data->battlerId].moves[i]), text);
             printer.currentY = printer.y = (i * yMultiplier) + sSecondaryListTemplate.upText_Y;
             AddTextPrinter(&printer, 0, NULL);
         }
@@ -1430,7 +1466,7 @@ static void PrintSecondaryEntries(struct BattleDebugMenu *data)
         }
         break;
     case LIST_ITEM_ABILITY:
-        PadString(gAbilityNames[gBattleMons[data->battlerId].ability], text);
+        PadString(gAbilitiesInfo[gBattleMons[data->battlerId].ability].name, text);
         printer.currentY = printer.y = sSecondaryListTemplate.upText_Y;
         AddTextPrinter(&printer, 0, NULL);
         break;
@@ -1444,7 +1480,7 @@ static void PrintSecondaryEntries(struct BattleDebugMenu *data)
         {
             u8 *types = &gBattleMons[data->battlerId].type1;
 
-            PadString(gTypeNames[types[i]], text);
+            PadString(gTypesInfo[types[i]].name, text);
             printer.currentY = printer.y = (i * yMultiplier) + sSecondaryListTemplate.upText_Y;
             AddTextPrinter(&printer, 0, NULL);
         }
@@ -1497,7 +1533,7 @@ static void PrintDigitChars(struct BattleDebugMenu *data)
 
     text[i] = EOS;
 
-    AddTextPrinterParameterized(data->modifyWindowId, 1, text, 3, 0, 0, NULL);
+    AddTextPrinterParameterized(data->modifyWindowId, FONT_NORMAL, text, 3, 0, 0, NULL);
 }
 
 static const u32 GetBitfieldToAndValue(u32 currBit, u32 bitsCount)
@@ -1626,7 +1662,7 @@ static void ValueToCharDigits(u8 *charDigits, u32 newValue, u8 maxDigits)
 
 static u8 *GetSideStatusValue(struct BattleDebugMenu *data, bool32 changeStatus, bool32 statusTrue)
 {
-    struct SideTimer *sideTimer = &gSideTimers[GET_BATTLER_SIDE(data->battlerId)];
+    struct SideTimer *sideTimer = &gSideTimers[GetBattlerSide(data->battlerId)];
 
     switch (data->currentSecondaryListItemId)
     {
@@ -1736,6 +1772,15 @@ static u8 *GetSideStatusValue(struct BattleDebugMenu *data, bool32 changeStatus,
                 *(u32 *)(data->modifyArrows.modifiedValPtr) &= ~SIDE_STATUS_STICKY_WEB;
         }
         return &sideTimer->stickyWebAmount;
+    case LIST_SIDE_STEELSURGE:
+        if (changeStatus)
+        {
+            if (statusTrue)
+                *(u32 *)(data->modifyArrows.modifiedValPtr) |= SIDE_STATUS_STEELSURGE;
+            else
+                *(u32 *)(data->modifyArrows.modifiedValPtr) &= ~SIDE_STATUS_STEELSURGE;
+        }
+        return &sideTimer->steelsurgeAmount;
     default:
         return NULL;
     }
@@ -1889,8 +1934,8 @@ static void SetUpModifyArrows(struct BattleDebugMenu *data)
         data->modifyArrows.typeOfVal = VAL_BITFIELD_32;
         goto CASE_ITEM_STATUS;
     case LIST_ITEM_AI:
-        data->modifyArrows.modifiedValPtr = &gBattleResources->ai->aiFlags;
-        data->modifyArrows.currValue = GetBitfieldValue(gBattleResources->ai->aiFlags, data->bitfield[data->currentSecondaryListItemId].currBit, data->bitfield[data->currentSecondaryListItemId].bitsCount);
+        data->modifyArrows.modifiedValPtr = &gBattleResources->ai->aiFlags[data->battlerId];
+        data->modifyArrows.currValue = GetBitfieldValue(gBattleResources->ai->aiFlags[data->battlerId], data->bitfield[data->currentSecondaryListItemId].currBit, data->bitfield[data->currentSecondaryListItemId].bitsCount);
         data->modifyArrows.typeOfVal = VAL_BITFIELD_32;
         goto CASE_ITEM_STATUS;
     CASE_ITEM_STATUS:
@@ -1909,7 +1954,7 @@ static void SetUpModifyArrows(struct BattleDebugMenu *data)
             data->modifyArrows.maxValue = 9;
 
         data->modifyArrows.maxDigits = 2;
-        data->modifyArrows.modifiedValPtr = &gSideStatuses[GET_BATTLER_SIDE(data->battlerId)];
+        data->modifyArrows.modifiedValPtr = &gSideStatuses[GetBattlerSide(data->battlerId)];
         data->modifyArrows.typeOfVal = VAR_SIDE_STATUS;
         data->modifyArrows.currValue = *GetSideStatusValue(data, FALSE, FALSE);
         break;

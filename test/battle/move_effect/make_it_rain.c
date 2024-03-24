@@ -3,7 +3,8 @@
 
 ASSUMPTIONS
 {
-    ASSUME(gBattleMoves[MOVE_MAKE_IT_RAIN].effect == EFFECT_MAKE_IT_RAIN);
+    ASSUME(MoveHasAdditionalEffect(MOVE_MAKE_IT_RAIN, MOVE_EFFECT_PAYDAY));
+    ASSUME(MoveHasAdditionalEffectSelf(MOVE_MAKE_IT_RAIN, MOVE_EFFECT_SP_ATK_MINUS_1));
 }
 
 SINGLE_BATTLE_TEST("Make It Rain lowers special attack by one stage")
@@ -11,6 +12,7 @@ SINGLE_BATTLE_TEST("Make It Rain lowers special attack by one stage")
     s16 damage[2];
 
     GIVEN {
+        ASSUME(gMovesInfo[MOVE_MAKE_IT_RAIN].category == DAMAGE_CATEGORY_SPECIAL);
         PLAYER(SPECIES_WOBBUFFET);
         OPPONENT(SPECIES_WOBBUFFET);
     } WHEN {
@@ -30,5 +32,29 @@ SINGLE_BATTLE_TEST("Make It Rain lowers special attack by one stage")
         MESSAGE("Wobbuffet's Sp. Atk fell!");
     } THEN {
         EXPECT_MUL_EQ(damage[0], Q_4_12(0.66), damage[1]);
+    }
+}
+
+DOUBLE_BATTLE_TEST("Make It Rain lowers special attack by one stage if it hits both targets")
+{
+    GIVEN {
+        PLAYER(SPECIES_WOBBUFFET)
+        PLAYER(SPECIES_WOBBUFFET);
+        OPPONENT(SPECIES_WOBBUFFET);
+        OPPONENT(SPECIES_WOBBUFFET);
+    } WHEN {
+        TURN { MOVE(playerLeft, MOVE_MAKE_IT_RAIN); }
+    } SCENE {
+        ANIMATION(ANIM_TYPE_MOVE, MOVE_MAKE_IT_RAIN, playerLeft);
+        HP_BAR(opponentLeft);
+        NONE_OF {
+            MESSAGE("Coins scattered everywhere!");
+            ANIMATION(ANIM_TYPE_GENERAL, B_ANIM_STATS_CHANGE, playerLeft);
+            MESSAGE("Wobbuffet's Sp. Atk fell!");
+        }
+        HP_BAR(opponentRight);
+        MESSAGE("Coins scattered everywhere!");
+        ANIMATION(ANIM_TYPE_GENERAL, B_ANIM_STATS_CHANGE, playerLeft);
+        MESSAGE("Wobbuffet's Sp. Atk fell!");
     }
 }

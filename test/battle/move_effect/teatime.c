@@ -3,8 +3,8 @@
 
 ASSUMPTIONS
 {
-    ASSUME(gBattleMoves[MOVE_TEATIME].effect == EFFECT_TEATIME);
-    ASSUME(gItems[ITEM_LIECHI_BERRY].holdEffect == HOLD_EFFECT_ATTACK_UP);
+    ASSUME(gMovesInfo[MOVE_TEATIME].effect == EFFECT_TEATIME);
+    ASSUME(gItemsInfo[ITEM_LIECHI_BERRY].holdEffect == HOLD_EFFECT_ATTACK_UP);
 }
 
 SINGLE_BATTLE_TEST("Teatime causes the user to consume its Berry, ignoring HP requirements")
@@ -35,14 +35,14 @@ SINGLE_BATTLE_TEST("Teatime causes the user to consume its Berry, even in the pr
     }
 }
 
-SINGLE_BATTLE_TEST("Teatime causes the user to consume its Berry, even under the effects of Wonder Room")
+SINGLE_BATTLE_TEST("Teatime causes the user to consume its Berry, even under the effects of Magic Room")
 {
     GIVEN {
         PLAYER(SPECIES_WOBBUFFET) { Item(ITEM_LIECHI_BERRY); }
         OPPONENT(SPECIES_WOBBUFFET);
     } WHEN {
         TURN {
-            MOVE(opponent, MOVE_WONDER_ROOM);
+            MOVE(opponent, MOVE_MAGIC_ROOM);
             MOVE(player, MOVE_TEATIME);
         }
     } SCENE {
@@ -96,7 +96,7 @@ SINGLE_BATTLE_TEST("Teatime causes other Pokemon to consume their Berry even if 
 
 DOUBLE_BATTLE_TEST("Teatime causes all Pokémon to consume their berry")
 {
-    struct BattlePokemon *user;
+    struct BattlePokemon *user = NULL;
     PARAMETRIZE { user = playerLeft; }
     PARAMETRIZE { user = playerRight; }
     PARAMETRIZE { user = opponentLeft; }
@@ -143,14 +143,16 @@ SINGLE_BATTLE_TEST("Teatime does not affect Pokémon in the semi-invulnerable tu
         PLAYER(SPECIES_WOBBUFFET) { Item(ITEM_NONE); }
         OPPONENT(SPECIES_WOBBUFFET) { Item(ITEM_LIECHI_BERRY); }
     } WHEN {
-        TURN { 
+        TURN {
             MOVE(opponent, MOVE_FLY);
             MOVE(player, MOVE_TEATIME);
         }
     } SCENE {
         MESSAGE("Wobbuffet used Teatime!");
-        NOT ANIMATION(ANIM_TYPE_MOVE, MOVE_TEATIME, player);
-        NOT MESSAGE("Using Liechi Berry, the Attack of Foe Wobbuffet rose!");
+        NONE_OF {
+            ANIMATION(ANIM_TYPE_MOVE, MOVE_TEATIME, player);
+            MESSAGE("Using Liechi Berry, the Attack of Foe Wobbuffet rose!");
+        }
     }
 }
 
@@ -170,7 +172,7 @@ SINGLE_BATTLE_TEST("Teatime triggers Volt Absorb if it has been affected by Elec
         PLAYER(SPECIES_JOLTEON) { Ability(ABILITY_VOLT_ABSORB); Item(item); HP(55); MaxHP(100); }
         OPPONENT(SPECIES_WOBBUFFET) { Item(ITEM_LIECHI_BERRY); }
     } WHEN {
-        TURN { 
+        TURN {
             MOVE(player, move);
             MOVE(opponent, MOVE_TEATIME);
         }
@@ -206,7 +208,7 @@ SINGLE_BATTLE_TEST("Teatime triggers Lightning Rod if it has been affected by El
         PLAYER(SPECIES_PIKACHU) { Ability(ABILITY_LIGHTNING_ROD); Item(item); }
         OPPONENT(SPECIES_WOBBUFFET) { Item(ITEM_LIECHI_BERRY); }
     } WHEN {
-        TURN { 
+        TURN {
             MOVE(player, move);
             MOVE(opponent, MOVE_TEATIME);
         }
@@ -242,11 +244,10 @@ SINGLE_BATTLE_TEST("Teatime triggers Motor Drive if it has been affected by Elec
     PARAMETRIZE { move = MOVE_PLASMA_FISTS; item = ITEM_NONE; }
 
     GIVEN {
-        ASSUME(P_GEN_4_POKEMON == TRUE);
         PLAYER(SPECIES_ELECTIVIRE) { Ability(ABILITY_MOTOR_DRIVE); Item(item); }
         OPPONENT(SPECIES_WOBBUFFET) { Item(ITEM_LIECHI_BERRY); }
     } WHEN {
-        TURN { 
+        TURN {
             MOVE(player, move);
             MOVE(opponent, MOVE_TEATIME);
         }

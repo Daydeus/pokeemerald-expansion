@@ -27,6 +27,7 @@
 #include "util.h"
 #include "window.h"
 #include "constants/battle_anim.h"
+#include "constants/battle_partner.h"
 #include "constants/songs.h"
 #include "constants/party_menu.h"
 #include "constants/trainers.h"
@@ -176,6 +177,7 @@ void Controller_PlayerPartnerShowIntroHealthbox(u32 battler)
         && ++gBattleSpritesDataPtr->healthBoxesData[battler].introEndDelay != 1)
     {
         gBattleSpritesDataPtr->healthBoxesData[battler].introEndDelay = 0;
+        TryShinyAnimation(battler, &gPlayerParty[gBattlerPartyIndexes[battler]]);
 
         if (IsDoubleBattle() && !(gBattleTypeFlags & BATTLE_TYPE_MULTI))
         {
@@ -295,33 +297,27 @@ static void PlayerPartnerHandleDrawTrainerPic(u32 battler)
     s16 xPos, yPos;
     u32 trainerPicId;
 
-    if (gPartnerTrainerId == TRAINER_STEVEN_PARTNER)
+    if (gPartnerTrainerId > TRAINER_PARTNER(PARTNER_NONE))
     {
-        trainerPicId = TRAINER_BACK_PIC_STEVEN;
+        trainerPicId = gBattlePartners[gPartnerTrainerId - TRAINER_PARTNER(PARTNER_NONE)].trainerPic;
         xPos = 90;
-        yPos = (8 - gTrainerBackPicCoords[trainerPicId].size) * 4 + 80;
-    }
-    else if (gPartnerTrainerId >= TRAINER_CUSTOM_PARTNER)
-    {
-        trainerPicId = gPartnerSpriteId;
-        xPos = 90;
-        yPos = (8 - gTrainerBackPicCoords[trainerPicId].size) * 4 + 80;
+        yPos = (8 - gTrainerBacksprites[trainerPicId].coordinates.size) * 4 + 80;
     }
     else if (IsAiVsAiBattle())
     {
-        trainerPicId = gTrainers[gPartnerTrainerId].trainerPic;
+        trainerPicId = GetTrainerPicFromId(gPartnerTrainerId);
         xPos = 60;
-        yPos = (8 - gTrainerFrontPicCoords[trainerPicId].size) * 4 + 80;
+        yPos = 80;
     }
     else
     {
         trainerPicId = GetFrontierTrainerFrontSpriteId(gPartnerTrainerId);
         xPos = 32;
-        yPos = (8 - gTrainerFrontPicCoords[trainerPicId].size) * 4 + 80;
+        yPos = 80;
     }
 
-    // Use back pic only if the partner is Steven or a custom partner.
-    if (gPartnerTrainerId == TRAINER_STEVEN_PARTNER || gPartnerTrainerId >= TRAINER_CUSTOM_PARTNER)
+    // Use back pic only if the partner Steven or is custom.
+    if (gPartnerTrainerId > TRAINER_PARTNER(PARTNER_NONE))
         isFrontPic = FALSE;
     else
         isFrontPic = TRUE;
@@ -364,9 +360,9 @@ static void PlayerPartnerHandleChooseMove(u32 battler)
     }
     else
     {
-        if (gBattleMoves[moveInfo->moves[chosenMoveId]].target & (MOVE_TARGET_USER | MOVE_TARGET_USER_OR_SELECTED))
+        if (gMovesInfo[moveInfo->moves[chosenMoveId]].target & (MOVE_TARGET_USER | MOVE_TARGET_USER_OR_SELECTED))
             gBattlerTarget = battler;
-        if (gBattleMoves[moveInfo->moves[chosenMoveId]].target & MOVE_TARGET_BOTH)
+        if (gMovesInfo[moveInfo->moves[chosenMoveId]].target & MOVE_TARGET_BOTH)
         {
             gBattlerTarget = GetBattlerAtPosition(B_POSITION_OPPONENT_LEFT);
             if (gAbsentBattlerFlags & gBitTable[gBattlerTarget])
@@ -397,19 +393,21 @@ static void PlayerPartnerHandleChoosePokemon(u32 battler)
         chosenMonId = gSelectedMonPartyId = GetFirstFaintedPartyIndex(battler);
     }
     // Switching out
-    else if (gBattleStruct->monToSwitchIntoId[battler] == PARTY_SIZE)
+    else if (gBattleStruct->monToSwitchIntoId[battler] >= PARTY_SIZE || !IsValidForBattle(&gPlayerParty[gBattleStruct->monToSwitchIntoId[battler]]))
     {
-        chosenMonId = GetMostSuitableMonToSwitchInto(battler);
-        if (chosenMonId == PARTY_SIZE) // just switch to the next mon
-        {
-            u8 playerMonIdentity = GetBattlerAtPosition(B_POSITION_PLAYER_LEFT);
-            u8 selfIdentity = GetBattlerAtPosition(B_POSITION_PLAYER_RIGHT);
+        chosenMonId = GetMostSuitableMonToSwitchInto(battler, TRUE);
 
-            for (chosenMonId = PARTY_SIZE / 2; chosenMonId < PARTY_SIZE; chosenMonId++)
+        if (chosenMonId == PARTY_SIZE || !IsValidForBattle(&gPlayerParty[chosenMonId])) // just switch to the next mon
+        {
+            s32 firstId = (IsAiVsAiBattle()) ? 0 : (PARTY_SIZE / 2);
+            u32 battler1 = GetBattlerAtPosition(B_POSITION_PLAYER_LEFT);
+            u32 battler2 = IsDoubleBattle() ? GetBattlerAtPosition(B_POSITION_PLAYER_RIGHT) : battler1;
+
+            for (chosenMonId = firstId; chosenMonId < PARTY_SIZE; chosenMonId++)
             {
                 if (GetMonData(&gPlayerParty[chosenMonId], MON_DATA_HP) != 0
-                    && chosenMonId != gBattlerPartyIndexes[playerMonIdentity]
-                    && chosenMonId != gBattlerPartyIndexes[selfIdentity])
+                    && chosenMonId != gBattlerPartyIndexes[battler1]
+                    && chosenMonId != gBattlerPartyIndexes[battler2])
                 {
                     break;
                 }
@@ -436,14 +434,12 @@ static void PlayerPartnerHandleIntroTrainerBallThrow(u32 battler)
 {
     const u32 *trainerPal;
 
-    if (gPartnerTrainerId == TRAINER_STEVEN_PARTNER)
-        trainerPal = gTrainerBackPicPaletteTable[TRAINER_STEVEN_PARTNER].data;
-    else if (gPartnerTrainerId >= TRAINER_CUSTOM_PARTNER) // Custom multi battle.
-        trainerPal = gTrainerBackPicPaletteTable[gPartnerSpriteId].data;
+    if (gPartnerTrainerId > TRAINER_PARTNER(PARTNER_NONE))
+        trainerPal = gTrainerBacksprites[gPartnerSpriteId].palette.data;
     else if (IsAiVsAiBattle())
-        trainerPal = gTrainerFrontPicPaletteTable[gTrainers[gPartnerTrainerId].trainerPic].data;
+        trainerPal = gTrainerSprites[GetTrainerPicFromId(gPartnerTrainerId)].palette.data;
     else
-        trainerPal = gTrainerFrontPicPaletteTable[GetFrontierTrainerFrontSpriteId(gPartnerTrainerId)].data; // 2 vs 2 multi battle in Battle Frontier, load front sprite and pal.
+        trainerPal = gTrainerSprites[GetFrontierTrainerFrontSpriteId(gPartnerTrainerId)].palette.data; // 2 vs 2 multi battle in Battle Frontier, load front sprite and pal.
 
     BtlController_HandleIntroTrainerBallThrow(battler, 0xD6F9, trainerPal, 24, Controller_PlayerPartnerShowIntroHealthbox);
 }
