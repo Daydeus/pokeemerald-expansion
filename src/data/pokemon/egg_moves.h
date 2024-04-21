@@ -2672,15 +2672,17 @@ const u16 gEggMoves[] = {
 
 #if P_FAMILY_TRAPINCH
     egg_moves(TRAPINCH,
-        MOVE_FOCUS_ENERGY,
-        MOVE_QUICK_ATTACK,
-        MOVE_GUST,
-        MOVE_FLAIL,
-        MOVE_FURY_CUTTER,
-        MOVE_MUD_SHOT,
+        MOVE_BUG_BITE,
+        MOVE_DRAGON_DANCE,
+        MOVE_DRAGON_RAGE,
         MOVE_ENDURE,
         MOVE_EARTH_POWER,
-        MOVE_BUG_BITE,
+        MOVE_FIRST_IMPRESSION,
+        MOVE_FOCUS_ENERGY,
+        MOVE_FURY_CUTTER,
+        MOVE_GUST,
+        MOVE_MUD_BOMB,
+        MOVE_QUICK_ATTACK,
         MOVE_SIGNAL_BEAM),
 #endif //P_FAMILY_TRAPINCH
 
