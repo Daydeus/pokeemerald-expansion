@@ -1175,6 +1175,20 @@ const u16 gEggMoves[] = {
 #endif //P_PALDEAN_FORMS
 #endif //P_FAMILY_TAUROS
 
+#if P_FAMILY_MAGIKARP
+    egg_moves(MAGIKARP,
+        MOVE_ANCIENT_POWER,
+        MOVE_DRAGON_ASCENT,
+        MOVE_DRAGON_RUSH,
+        MOVE_FISHIOUS_REND,
+        MOVE_OUTRAGE,
+        MOVE_PAYBACK,
+        MOVE_REFRESH,
+        MOVE_SCALE_SHOT,
+        MOVE_SUPERSONIC,
+        MOVE_WHIRLPOOL),
+#endif //P_FAMILY_MAGIKARP
+
 #if P_FAMILY_LAPRAS
     egg_moves(LAPRAS,
         MOVE_FORESIGHT,
