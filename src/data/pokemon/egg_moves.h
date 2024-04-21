@@ -2432,7 +2432,7 @@ const u16 gEggMoves[] = {
         MOVE_BODY_SLAM,
         MOVE_STOMP,
         MOVE_SMELLING_SALTS,
-        MOVE_CURSE,
+        MOVE_FLARE_BLITZ,
         MOVE_SCREECH,
         MOVE_IRON_HEAD,
         MOVE_DRAGON_RUSH,
