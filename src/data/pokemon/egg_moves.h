@@ -1388,7 +1388,7 @@ const u16 gEggMoves[] = {
         MOVE_COVET,
         MOVE_NATURAL_GIFT,
         MOVE_IRON_TAIL,
-        MOVE_CAPTIVATE,
+        MOVE_SAND_ATTACK,
         MOVE_BABY_DOLL_EYES),
 #endif //P_FAMILY_SENTRET
 
