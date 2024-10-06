@@ -91,6 +91,7 @@ PetalburgCity_Gym_EventScript_ReturnFromWallyTutorial::
 	delay 30
 	applymovement OBJ_EVENT_ID_PLAYER, Common_Movement_WalkInPlaceFasterUp
 	waitmovement 0
+	call PetalburgCity_Gym_EventScript_GiveExpShare
 	msgbox PetalburgCity_Gym_Text_DadGoCollectBadges, MSGBOX_DEFAULT
 	setvar VAR_PETALBURG_GYM_STATE, 2
 	releaseall
@@ -102,6 +103,13 @@ PetalburgCity_Gym_Movement_WallyExitGym:
 	walk_down
 	delay_16
 	step_end
+
+PetalburgCity_Gym_EventScript_GiveExpShare::
+	msgbox PetalburgCity_Gym_Text_PerfectRookieTool, MSGBOX_DEFAULT
+	giveitem ITEM_EXP_SHARE
+	goto_if_eq VAR_RESULT, FALSE, Common_EventScript_ShowBagIsFull
+	setflag FLAG_RECEIVED_EXP_SHARE
+	return
 
 PetalburgCity_Gym_EventScript_Norman::
 	lock
@@ -1214,9 +1222,15 @@ PetalburgCity_Gym_Text_WallyThankYouBye:
 	.string "so I have to go!\p"
 	.string "Bye, {PLAYER}!$"
 
-PetalburgCity_Gym_Text_DadGoCollectBadges:
+PetalburgCity_Gym_Text_PerfectRookieTool:
 	.string "DAD: Now…\p"
-	.string "{PLAYER}, if you want to become a\n"
+	.string "I got this because I hoped that you\n"
+	.string "would follow in my footsteps one day.\p"
+	.string "It's the perfect tool for a rookie\n"
+	.string "POKéMON TRAINER.$"
+
+PetalburgCity_Gym_Text_DadGoCollectBadges:
+	.string "DAD: {PLAYER}, if you want to become a\n"
 	.string "strong TRAINER, here's my advice.\p"
 	.string "Head for RUSTBORO CITY beyond this\n"
 	.string "town.\p"
