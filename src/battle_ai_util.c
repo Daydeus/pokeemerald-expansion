@@ -2915,8 +2915,7 @@ bool32 AI_CanConfuse(u32 battlerAtk, u32 battlerDef, u32 defAbility, u32 battler
 
 bool32 AI_CanGetFrostbite(u32 battler, u32 ability)
 {
-    if (ability == ABILITY_MAGMA_ARMOR
-      || ability == ABILITY_COMATOSE
+    if (ability == ABILITY_COMATOSE
       || IS_BATTLER_OF_TYPE(battler, TYPE_ICE)
       || gBattleMons[battler].status1 & STATUS1_ANY
       || IsAbilityStatusProtected(battler)

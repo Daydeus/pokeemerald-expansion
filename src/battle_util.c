@@ -5275,6 +5275,10 @@ u32 AbilityBattleEffects(u32 caseID, u32 battler, u32 ability, u32 special, u32 
                 if (moveType == TYPE_WATER)
                     effect = 1;
                 break;
+            case ABILITY_MAGMA_ARMOR:
+                if (moveType == TYPE_WATER)
+                    effect = 2, statId = STAT_DEF;
+                break;
             case ABILITY_MOTOR_DRIVE:
                 if (moveType == TYPE_ELECTRIC && gMovesInfo[move].target != MOVE_TARGET_ALL_BATTLERS)
                     effect = 2, statId = STAT_SPEED;
@@ -6149,13 +6153,6 @@ u32 AbilityBattleEffects(u32 caseID, u32 battler, u32 ability, u32 special, u32 
                     effect = 1;
                 }
                 break;
-            case ABILITY_MAGMA_ARMOR:
-                if (gBattleMons[battler].status1 & (STATUS1_FREEZE | STATUS1_FROSTBITE))
-                {
-                    StringCopy(gBattleTextBuff1, gStatusConditionString_IceJpn);
-                    effect = 1;
-                }
-                break;
             case ABILITY_OBLIVIOUS:
                 if (gBattleMons[battler].status2 & STATUS2_INFATUATION)
                     effect = 3;
@@ -6631,7 +6628,6 @@ bool32 CanBeFrozen(u32 battler)
     if (IS_BATTLER_OF_TYPE(battler, TYPE_ICE)
      || IsBattlerWeatherAffected(battler, B_WEATHER_SUN)
      || gSideStatuses[GetBattlerSide(battler)] & SIDE_STATUS_SAFEGUARD
-     || ability == ABILITY_MAGMA_ARMOR
      || ability == ABILITY_COMATOSE
      || ability == ABILITY_PURIFYING_SALT
      || gBattleMons[battler].status1 & STATUS1_ANY
@@ -6646,7 +6642,6 @@ bool32 CanGetFrostbite(u32 battler)
     u16 ability = GetBattlerAbility(battler);
     if (IS_BATTLER_OF_TYPE(battler, TYPE_ICE)
       || gSideStatuses[GetBattlerSide(battler)] & SIDE_STATUS_SAFEGUARD
-      || ability == ABILITY_MAGMA_ARMOR
       || ability == ABILITY_COMATOSE
       || ability == ABILITY_PURIFYING_SALT
       || gBattleMons[battler].status1 & STATUS1_ANY
@@ -10532,7 +10527,8 @@ uq4_12_t GetTypeEffectiveness(struct Pokemon *mon, u8 moveType)
                                        ||  abilityDef == ABILITY_EARTH_EATER))
          || (moveType == TYPE_WATER    && (abilityDef == ABILITY_WATER_ABSORB
                                        || abilityDef == ABILITY_DRY_SKIN
-                                       || abilityDef == ABILITY_STORM_DRAIN))
+                                       || abilityDef == ABILITY_STORM_DRAIN
+                                       || abilityDef == ABILITY_MAGMA_ARMOR))
          || (moveType == TYPE_ELECTRIC && (abilityDef == ABILITY_LIGHTNING_ROD // TODO: Add Gen 3/4 config check
                                        || abilityDef == ABILITY_VOLT_ABSORB
                                        || abilityDef == ABILITY_MOTOR_DRIVE)))

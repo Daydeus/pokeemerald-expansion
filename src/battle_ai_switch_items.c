@@ -341,6 +341,7 @@ static bool32 FindMonThatAbsorbsOpponentsMove(u32 battler, bool32 emitResult)
     {
         absorbingTypeAbilities[numAbsorbingAbilities++] = ABILITY_WATER_ABSORB;
         absorbingTypeAbilities[numAbsorbingAbilities++] = ABILITY_DRY_SKIN;
+        absorbingTypeAbilities[numAbsorbingAbilities++] = ABILITY_MAGMA_ARMOR;
         if (B_REDIRECT_ABILITY_IMMUNITY >= GEN_5)
             absorbingTypeAbilities[numAbsorbingAbilities++] = ABILITY_STORM_DRAIN;
     }

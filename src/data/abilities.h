@@ -317,8 +317,8 @@ const struct Ability gAbilitiesInfo[ABILITIES_COUNT] =
     [ABILITY_MAGMA_ARMOR] =
     {
         .name = _("Magma Armor"),
-        .description = COMPOUND_STRING("Prevents freezing."),
-        .aiRating = 1,
+        .description = COMPOUND_STRING("Water increases Defense."),
+        .aiRating = 7,
         .breakable = TRUE,
     },
 
