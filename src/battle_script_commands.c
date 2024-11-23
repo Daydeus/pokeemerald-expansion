@@ -2057,6 +2057,11 @@ static void Cmd_adjustdamage(void)
         RecordAbilityBattle(gBattlerTarget, ABILITY_STURDY);
         gSpecialStatuses[gBattlerTarget].sturdied = TRUE;
     }
+    else if (B_STURDY >= GEN_5 && GetBattlerAbility(gBattlerTarget) == ABILITY_WATER_VEIL && BATTLER_MAX_HP(gBattlerTarget))
+    {
+        RecordAbilityBattle(gBattlerTarget, ABILITY_WATER_VEIL);
+        gSpecialStatuses[gBattlerTarget].sturdied = TRUE;
+    }
     else if (holdEffect == HOLD_EFFECT_FOCUS_SASH && BATTLER_MAX_HP(gBattlerTarget))
     {
         RecordItemEffectBattle(gBattlerTarget, holdEffect);
@@ -2097,7 +2102,7 @@ static void Cmd_adjustdamage(void)
     else if (gSpecialStatuses[gBattlerTarget].sturdied)
     {
         gMoveResultFlags |= MOVE_RESULT_STURDIED;
-        gLastUsedAbility = ABILITY_STURDY;
+        gLastUsedAbility = gBattleMons[gBattlerTarget].ability;
     }
     else if (B_AFFECTION_MECHANICS == TRUE && gSpecialStatuses[gBattlerTarget].affectionEndured)
     {
@@ -2936,7 +2941,7 @@ void SetMoveEffect(bool32 primary, bool32 certain)
             statusChanged = TRUE;
             break;
         case STATUS1_BURN:
-            if ((battlerAbility == ABILITY_WATER_VEIL || battlerAbility == ABILITY_WATER_BUBBLE)
+            if ((battlerAbility == ABILITY_WATER_BUBBLE)
               && (primary == TRUE || certain == TRUE))
             {
                 gLastUsedAbility = battlerAbility;
@@ -12403,10 +12408,10 @@ static void Cmd_tryKO(void)
         RecordItemEffectBattle(gBattlerTarget, holdEffect);
     }
 
-    if (targetAbility == ABILITY_STURDY)
+    if (targetAbility == ABILITY_STURDY || targetAbility == ABILITY_WATER_VEIL)
     {
         gMoveResultFlags |= MOVE_RESULT_MISSED;
-        gLastUsedAbility = ABILITY_STURDY;
+        gLastUsedAbility = gBattleMons[gBattlerTarget].ability;
         gBattlescriptCurrInstr = BattleScript_SturdyPreventsOHKO;
         gBattlerAbility = gBattlerTarget;
     }

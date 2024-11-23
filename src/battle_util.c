@@ -6145,7 +6145,6 @@ u32 AbilityBattleEffects(u32 caseID, u32 battler, u32 ability, u32 special, u32 
                     effect = 1;
                 }
                 break;
-            case ABILITY_WATER_VEIL:
             case ABILITY_WATER_BUBBLE:
                 if (gBattleMons[battler].status1 & STATUS1_BURN)
                 {
@@ -6597,7 +6596,6 @@ bool32 CanBeBurned(u32 battler, u32 ability)
     if (IS_BATTLER_OF_TYPE(battler, TYPE_FIRE)
      || gSideStatuses[GetBattlerSide(battler)] & SIDE_STATUS_SAFEGUARD
      || gBattleMons[battler].status1 & STATUS1_ANY
-     || ability == ABILITY_WATER_VEIL
      || ability == ABILITY_WATER_BUBBLE
      || ability == ABILITY_COMATOSE
      || ability == ABILITY_THERMAL_EXCHANGE

@@ -325,8 +325,8 @@ const struct Ability gAbilitiesInfo[ABILITIES_COUNT] =
     [ABILITY_WATER_VEIL] =
     {
         .name = _("Water Veil"),
-        .description = COMPOUND_STRING("Prevents burns."),
-        .aiRating = 4,
+        .description = COMPOUND_STRING("Negates 1-hit KO attacks."),
+        .aiRating = 6,
         .breakable = TRUE,
     },
 

@@ -1546,7 +1546,7 @@ bool32 ShouldTryOHKO(u32 battlerAtk, u32 battlerDef, u32 atkAbility, u32 defAbil
     else if (holdEffect == HOLD_EFFECT_FOCUS_SASH && AtMaxHp(battlerDef))
         return FALSE;
 
-    if (!DoesBattlerIgnoreAbilityChecks(atkAbility, move) && defAbility == ABILITY_STURDY)
+    if ((!DoesBattlerIgnoreAbilityChecks(atkAbility, move) && defAbility == ABILITY_STURDY) || (!DoesBattlerIgnoreAbilityChecks(atkAbility, move) && defAbility == ABILITY_WATER_VEIL))
         return FALSE;
 
     if ((((gStatuses3[battlerDef] & STATUS3_ALWAYS_HITS)
@@ -2662,6 +2662,7 @@ bool32 ShouldPivot(u32 battlerAtk, u32 battlerDef, u32 defAbility, u32 move, u32
                     if (!IS_MOVE_STATUS(move) && (shouldSwitch
                         || (AtMaxHp(battlerDef) && (AI_DATA->holdEffects[battlerDef] == HOLD_EFFECT_FOCUS_SASH
                         || (B_STURDY >= GEN_5 && defAbility == ABILITY_STURDY)
+                        || (B_STURDY >= GEN_5 && defAbility == ABILITY_WATER_VEIL)
                         || defAbility == ABILITY_MULTISCALE
                         || defAbility == ABILITY_SHADOW_SHIELD))))
                         return PIVOT;   // pivot to break sash/sturdy/multiscale
@@ -2670,6 +2671,7 @@ bool32 ShouldPivot(u32 battlerAtk, u32 battlerDef, u32 defAbility, u32 move, u32
                 {
                     if (!IS_MOVE_STATUS(move) && (AtMaxHp(battlerDef) && (AI_DATA->holdEffects[battlerDef] == HOLD_EFFECT_FOCUS_SASH
                         || (B_STURDY >= GEN_5 && defAbility == ABILITY_STURDY)
+                        || (B_STURDY >= GEN_5 && defAbility == ABILITY_WATER_VEIL)
                         || defAbility == ABILITY_MULTISCALE
                         || defAbility == ABILITY_SHADOW_SHIELD)))
                         return PIVOT;   // pivot to break sash/sturdy/multiscale

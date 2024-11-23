@@ -40,7 +40,6 @@ AI_SINGLE_BATTLE_TEST("AI avoids Will-o-Wisp when it can not burn target")
 {
     u32 species, ability;
 
-    PARAMETRIZE { species = SPECIES_BUIZEL; ability = ABILITY_WATER_VEIL; }
     PARAMETRIZE { species = SPECIES_DEWPIDER; ability = ABILITY_WATER_BUBBLE; }
     PARAMETRIZE { species = SPECIES_KOMALA; ability = ABILITY_COMATOSE; }
     PARAMETRIZE { species = SPECIES_ARCTIBAX; ability = ABILITY_THERMAL_EXCHANGE; }
