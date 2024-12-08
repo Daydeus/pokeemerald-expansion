@@ -59,14 +59,14 @@ SINGLE_BATTLE_TEST("Magma Armor blocks multi-hit Water-type moves")
     } WHEN {
         TURN { MOVE(opponent, MOVE_WATER_SHURIKEN); }
     } SCENE {
-        MESSAGE("Foe Poliwhirl used Water Shuriken!");
+        MESSAGE("The opposing Poliwhirl used Water Shuriken!");
         ABILITY_POPUP(player, ABILITY_MAGMA_ARMOR);
         ANIMATION(ANIM_TYPE_GENERAL, B_ANIM_STATS_CHANGE, player);
         MESSAGE("Slugma's Defense rose!");
         NONE_OF {
             ANIMATION(ANIM_TYPE_MOVE, MOVE_WATER_SHURIKEN, opponent);
             HP_BAR(player);
-            MESSAGE("Hit 5 time(s)!");
+            MESSAGE("The Pokémon was hit 5 time(s)!");
         }
     }
 }

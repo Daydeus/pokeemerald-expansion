@@ -4238,6 +4238,10 @@ u32 CanAbilityAbsorbMove(u32 battlerAtk, u32 battlerDef, u32 abilityDef, u32 mov
         if (moveType == TYPE_GRASS)
             effect = MOVE_ABSORBED_BY_STAT_INCREASE_ABILITY;
         break;
+    case ABILITY_MAGMA_ARMOR:
+        if (moveType == TYPE_WATER)
+            effect = MOVE_ABSORBED_BY_STAT_INCREASE_ABILITY;
+        break;
     case ABILITY_WELL_BAKED_BODY:
         if (moveType == TYPE_FIRE)
             effect = MOVE_ABSORBED_BY_STAT_INCREASE_ABILITY;
